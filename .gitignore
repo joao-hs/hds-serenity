@@ -1,0 +1,4 @@
+HDSLedger/Communication/target/*
+HDSLedger/Service/target/*
+HDSLedger/Utilities/target/*
+HDSLedger/.venv/*
