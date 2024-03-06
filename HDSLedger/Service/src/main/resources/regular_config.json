@@ -3,24 +3,32 @@
         "id": "1",
         "isLeader": true,
         "hostname": "localhost",
-        "port": 3001
+        "port": 3001,
+        "privKeyPath": "../PKI/node1.priv",
+        "pubKeyPath": "../PKI/node1.pub"
     },
     {
         "id": "2",
         "isLeader": false,
         "hostname": "localhost",
-        "port": 3002
+        "port": 3002,
+        "privKeyPath": "../PKI/node2.priv",
+        "pubKeyPath": "../PKI/node2.pub"
     },
     {
         "id": "3",
         "isLeader": false,
         "hostname": "localhost",
-        "port": 3003
+        "port": 3003,
+        "privKeyPath": "../PKI/node3.priv",
+        "pubKeyPath": "../PKI/node3.pub"
     },
     {
         "id": "4",
         "isLeader": false,
         "hostname": "localhost",
-        "port": 3004
+        "port": 3004,
+        "privKeyPath": "../PKI/node4.priv",
+        "pubKeyPath": "../PKI/node4.pub"
     }
 ]

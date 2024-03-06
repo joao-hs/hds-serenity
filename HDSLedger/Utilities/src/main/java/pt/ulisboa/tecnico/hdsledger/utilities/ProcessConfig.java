@@ -11,6 +11,10 @@ public class ProcessConfig {
 
     private int port;
 
+    private String pubKeyPath;
+
+    private String privKeyPath;
+
     public boolean isLeader() {
         return isLeader;
     }
@@ -27,5 +31,12 @@ public class ProcessConfig {
         return hostname;
     }
 
+    public String getPubKeyPath() {
+        return pubKeyPath;
+    }
+
+    public String getPrivKeyPath() {
+        return privKeyPath;
+    }
 
 }

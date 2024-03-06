@@ -154,9 +154,24 @@ public class Link {
     public void unreliableSend(InetAddress hostname, int port, Message data) {
         new Thread(() -> {
             try {
+                // Signing the message
+                String jsonData = new Gson().toJson(data);
+                String signature;
+
+                try {
+                    signature = RSAEncryption.sign(jsonData, config.getPrivKeyPath());
+                } catch (Exception e) {
+                    throw new HDSSException(ErrorMessage.SigningMessageError);
+                }
+
+                SignedMessage message = new SignedMessage(jsonData, signature);
+
                 byte[] buf = new Gson().toJson(data).getBytes();
+
                 DatagramPacket packet = new DatagramPacket(buf, buf.length, hostname, port);
+
                 socket.send(packet);
+
             } catch (IOException e) {
                 e.printStackTrace();
                 throw new HDSSException(ErrorMessage.SocketSendingError);
@@ -171,6 +186,7 @@ public class Link {
 
         Message message = null;
         String serialized = "";
+        SignedMessage responseSignData = null;
         Boolean local = false;
         DatagramPacket response = null;
         
@@ -186,7 +202,21 @@ public class Link {
 
             byte[] buffer = Arrays.copyOfRange(response.getData(), 0, response.getLength());
             serialized = new String(buffer);
+            responseSignData = new Gson().fromJson(serialized, SignedMessage.class);
             message = new Gson().fromJson(serialized, Message.class);
+
+            if (!RSAEncryption.verifySignature(responseSignData.getMessage(),
+                responseSignData.getSignature(),
+                nodes.get(message.getSenderId()).getPubKeyPath())) {
+
+                message.setType(Message.Type.IGNORE);
+
+                LOGGER.log(Level.INFO, MessageFormat.format("Invalid signature from node {0}:{1}",
+                    InetAddress.getByName(response.getAddress().getHostName()), response.getPort()));
+
+                return message;
+            }
+
         }
 
         String senderId = message.getSenderId();
