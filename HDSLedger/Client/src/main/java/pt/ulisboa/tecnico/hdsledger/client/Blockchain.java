@@ -67,7 +67,11 @@ public class Blockchain {
 
     public void append(String message) {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Appending message: {1}", clientConfig.getId(), message));
-        // Multicast to F+1 nodes to ensure that at least 1 correct node receives the request
-        link.multicastClientPort(new BlockchainRequest(this.clientConfig.getId(), Message.Type.APPEND, message), F_nodes + 1);
+        // * Multicast to F+1 nodes to ensure that at least 1 correct node receives the request 
+        //      => nodes need to store received messages and try to append them on their turn to be the leader
+        // link.multicastClientPort(new BlockchainRequest(this.clientConfig.getId(), Message.Type.APPEND, message), F_nodes + 1);
+        // ! Problem: if the leader is byzantine, should it abort and client tries again?
+        // By broadcasting, the current leader will receive the message. The problem remains.
+        link.broadcastClientPort(new BlockchainRequest(this.clientConfig.getId(), Message.Type.APPEND, message));
     }
 }
