@@ -56,9 +56,6 @@ public class NodeService implements UDPService {
     // Last decided consensus instance
     private final AtomicInteger lastDecidedConsensusInstance = new AtomicInteger(0);
 
-    // Received requests to append to the blockchain when leader
-    private Queue<BlockchainRequest> requests = new ConcurrentLinkedQueue<>();
-
     // Ledger (for now, just a list of strings)
     private ArrayList<String> ledger = new ArrayList<String>();
 
@@ -349,17 +346,9 @@ public class NodeService implements UDPService {
         }
     }
 
-    /*
-     * uponAppend:
-     * 1. Store request
-     * 2. If leader, start consensus instance
-     * 3. If not leader, ignore
-     */
+
     public synchronized void uponAppend(BlockchainRequest message) {
-        requests.add(message);
-        if (config.isLeader()) {
-            startConsensus(message.getMessage());
-        }
+        startConsensus(message.getMessage()); // if the node is not the leader, it won't start a consensus, it will just store the request
     }
 
     @Override
