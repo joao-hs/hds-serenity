@@ -1,0 +1,30 @@
+[
+    {   
+        "id": "C1",
+        "hostname": "localhost",
+        "port": 3101,
+        "privKeyPath": "../Keys/client1.priv",
+        "pubKeyPath": "../Keys/client1.pub"
+    },
+    {
+        "id": "C2",
+        "hostname": "localhost",
+        "port": 3102,
+        "privKeyPath": "../Keys/client2.priv",
+        "pubKeyPath": "../Keys/client2.pub"
+    },
+    {
+        "id": "C3",
+        "hostname": "localhost",
+        "port": 3103,
+        "privKeyPath": "../Keys/client3.priv",
+        "pubKeyPath": "../Keys/client3.pub"
+    },
+    {
+        "id": "C4",
+        "hostname": "localhost",
+        "port": 3104,
+        "privKeyPath": "../Keys/client4.priv",
+        "pubKeyPath": "../Keys/client4.pub"
+    }
+]

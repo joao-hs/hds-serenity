@@ -73,9 +73,30 @@ public class Link {
      *
      * @param data The message to be broadcasted
      */
-    public void broadcast(Message data) {
+    public void broadcastPort(Message data) {
         Gson gson = new Gson();
-        nodes.forEach((destId, dest) -> send(destId, gson.fromJson(gson.toJson(data), data.getClass())));
+        nodes.forEach((destId, dest) -> sendPort(destId, gson.fromJson(gson.toJson(data), data.getClass())));
+    }
+
+    public void broadcastClientPort(Message data) {
+        Gson gson = new Gson();
+        nodes.forEach((destId, dest) -> sendClientPort(destId, gson.fromJson(gson.toJson(data), data.getClass())));
+    }
+
+    public void sendPort(String nodeId, Message data) {
+        ProcessConfig node = nodes.get(nodeId);
+        if (node == null)
+            throw new HDSSException(ErrorMessage.NoSuchNode);
+
+        send(nodeId, node.getPort(), data);
+    }
+
+    public void sendClientPort(String nodeId, Message data) {
+        ProcessConfig node = nodes.get(nodeId);
+        if (node == null)
+            throw new HDSSException(ErrorMessage.NoSuchNode);
+
+        send(nodeId, node.getClientPort(), data);
     }
 
     /*
@@ -85,7 +106,7 @@ public class Link {
      *
      * @param data The message to be sent
      */
-    public void send(String nodeId, Message data) {
+    public void send(String nodeId, int destPort, Message data) {
 
         // Spawn a new thread to send the message
         // To avoid blocking while waiting for ACK
@@ -99,7 +120,6 @@ public class Link {
 
                 // If the message is not ACK, it will be resent
                 InetAddress destAddress = InetAddress.getByName(node.getHostname());
-                int destPort = node.getPort();
                 int count = 1;
                 int messageId = data.getMessageId();
                 int sleepTime = BASE_SLEEP_TIME;
@@ -166,7 +186,7 @@ public class Link {
 
                 SignedMessage message = new SignedMessage(jsonData, signature);
 
-                byte[] buf = new Gson().toJson(data).getBytes();
+                byte[] buf = new Gson().toJson(message).getBytes();
 
                 DatagramPacket packet = new DatagramPacket(buf, buf.length, hostname, port);
 
@@ -190,6 +210,7 @@ public class Link {
         Boolean local = false;
         DatagramPacket response = null;
         
+        // If there are messages in the local queue, receive those first
         if (this.localhostQueue.size() > 0) {
             message = this.localhostQueue.poll();
             local = true; 
@@ -203,7 +224,7 @@ public class Link {
             byte[] buffer = Arrays.copyOfRange(response.getData(), 0, response.getLength());
             serialized = new String(buffer);
             responseSignData = new Gson().fromJson(serialized, SignedMessage.class);
-            message = new Gson().fromJson(serialized, Message.class);
+            message = new Gson().fromJson(responseSignData.getMessage(), Message.class);
 
             if (!RSAEncryption.verifySignature(responseSignData.getMessage(),
                 responseSignData.getSignature(),
@@ -234,7 +255,7 @@ public class Link {
 
         // It's not an ACK -> Deserialize for the correct type
         if (!local)
-            message = new Gson().fromJson(serialized, this.messageClass);
+            message = new Gson().fromJson(responseSignData.getMessage(), this.messageClass);
 
         boolean isRepeated = !receivedMessages.get(message.getSenderId()).add(messageId);
         Type originalType = message.getType();
@@ -281,5 +302,27 @@ public class Link {
         }
         
         return message;
+    }
+
+    public void multicastPort(Message data, int n) {
+        //TODO: Make sure to include leader in the choosen nodes
+
+        List<String> nodes = new ArrayList<>(this.nodes.keySet());
+        //Collections.shuffle(nodes); //Comment until todo is done
+
+        for (int i = 0; i < n - 1; i++) {
+            sendPort(nodes.get(i), data);
+        }
+    }
+
+    public void multicastClientPort(Message data, int n) {
+        //TODO: Make sure to include leader in the choosen nodes
+
+        List<String> nodes = new ArrayList<>(this.nodes.keySet());
+        //Collections.shuffle(nodes); //Comment until todo is done
+
+        for (int i = 0; i < n - 1; i++) {
+            sendClientPort(nodes.get(i), data);
+        }
     }
 }

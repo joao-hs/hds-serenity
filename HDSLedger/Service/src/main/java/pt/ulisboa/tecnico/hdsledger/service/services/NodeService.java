@@ -6,10 +6,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
+import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.Link;
@@ -34,7 +37,10 @@ public class NodeService implements UDPService {
     private final ProcessConfig leaderConfig;
 
     // Link to communicate with nodes
-    private final Link link;
+    private final Link nodeLink;
+
+    // Link to communicate with clients
+    private final Link clientLink;
 
     // Consensus instance -> Round -> List of prepare messages
     private final MessageBucket prepareMessages;
@@ -50,13 +56,17 @@ public class NodeService implements UDPService {
     // Last decided consensus instance
     private final AtomicInteger lastDecidedConsensusInstance = new AtomicInteger(0);
 
+    // Received requests to append to the blockchain when leader
+    private Queue<BlockchainRequest> requests = new ConcurrentLinkedQueue<>();
+
     // Ledger (for now, just a list of strings)
     private ArrayList<String> ledger = new ArrayList<String>();
 
-    public NodeService(Link link, ProcessConfig config,
+    public NodeService(Link nodeLink, Link clientLink, ProcessConfig config,
             ProcessConfig leaderConfig, ProcessConfig[] nodesConfig) {
 
-        this.link = link;
+        this.nodeLink = nodeLink;
+        this.clientLink = clientLink;
         this.config = config;
         this.leaderConfig = leaderConfig;
         this.nodesConfig = nodesConfig;
@@ -128,7 +138,7 @@ public class NodeService implements UDPService {
             InstanceInfo instance = this.instanceInfo.get(localConsensusInstance);
             LOGGER.log(Level.INFO,
                 MessageFormat.format("{0} - Node is leader, sending PRE-PREPARE message", config.getId()));
-            this.link.broadcast(this.createConsensusMessage(value, localConsensusInstance, instance.getCurrentRound()));
+            this.nodeLink.broadcastPort(this.createConsensusMessage(value, localConsensusInstance, instance.getCurrentRound()));
         } else {
             LOGGER.log(Level.INFO,
                     MessageFormat.format("{0} - Node is not leader, waiting for PRE-PREPARE message", config.getId()));
@@ -185,7 +195,7 @@ public class NodeService implements UDPService {
                 .setReplyToMessageId(senderMessageId)
                 .build();
 
-        this.link.broadcast(consensusMessage);
+        this.nodeLink.broadcastPort(consensusMessage);
     }
 
     /*
@@ -234,7 +244,7 @@ public class NodeService implements UDPService {
                     .setMessage(instance.getCommitMessage().toJson())
                     .build();
 
-            link.send(senderId, m);
+            nodeLink.sendPort(senderId, m);
             return;
         }
 
@@ -260,7 +270,7 @@ public class NodeService implements UDPService {
                         .setMessage(c.toJson())
                         .build();
 
-                link.send(senderMessage.getSenderId(), m);
+                nodeLink.sendPort(senderMessage.getSenderId(), m);
             });
         }
     }
@@ -339,14 +349,27 @@ public class NodeService implements UDPService {
         }
     }
 
+    /*
+     * uponAppend:
+     * 1. Store request
+     * 2. If leader, start consensus instance
+     * 3. If not leader, ignore
+     */
+    public synchronized void uponAppend(BlockchainRequest message) {
+        requests.add(message);
+        if (config.isLeader()) {
+            startConsensus(message.getMessage());
+        }
+    }
+
     @Override
     public void listen() {
         try {
-            // Thread to listen on every request
+            // Thread to listen nodes
             new Thread(() -> {
                 try {
                     while (true) {
-                        Message message = link.receive();
+                        Message message = nodeLink.receive();
 
                         // Separate thread to handle each message
                         new Thread(() -> {
@@ -364,6 +387,42 @@ public class NodeService implements UDPService {
                                 case COMMIT ->
                                     uponCommit((ConsensusMessage) message);
 
+
+                                case ACK ->
+                                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received ACK message from {1}",
+                                            config.getId(), message.getSenderId()));
+
+                                case IGNORE ->
+                                    LOGGER.log(Level.INFO,
+                                            MessageFormat.format("{0} - Received IGNORE message from {1}",
+                                                    config.getId(), message.getSenderId()));
+
+                                default ->
+                                    LOGGER.log(Level.INFO,
+                                            MessageFormat.format("{0} - Received unknown message from {1}",
+                                                    config.getId(), message.getSenderId()));
+
+                            }
+
+                        }).start();
+                    }
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+
+            // Thread to listen clients
+            new Thread(() -> {
+                try {
+                    while (true) {
+                        Message message = clientLink.receive();
+
+                        // Separate thread to handle each message
+                        new Thread(() -> {
+
+                            switch (message.getType()) {
+                                case APPEND ->
+                                    uponAppend((BlockchainRequest) message);
 
                                 case ACK ->
                                     LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received ACK message from {1}",

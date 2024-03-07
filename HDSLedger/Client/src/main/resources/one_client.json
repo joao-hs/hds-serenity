@@ -1,0 +1,9 @@
+[
+    {   
+        "id": "C1",
+        "hostname": "localhost",
+        "port": 3101,
+        "privKeyPath": "../Keys/client1.priv",
+        "pubKeyPath": "../Keys/client1.pub"
+    }
+]

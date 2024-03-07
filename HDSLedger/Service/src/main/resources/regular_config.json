@@ -4,31 +4,35 @@
         "isLeader": true,
         "hostname": "localhost",
         "port": 3001,
-        "privKeyPath": "../PKI/node1.priv",
-        "pubKeyPath": "../PKI/node1.pub"
+        "clientPort": 3011,
+        "privKeyPath": "../Keys/node1.priv",
+        "pubKeyPath": "../Keys/node1.pub"
     },
     {
         "id": "2",
         "isLeader": false,
         "hostname": "localhost",
         "port": 3002,
-        "privKeyPath": "../PKI/node2.priv",
-        "pubKeyPath": "../PKI/node2.pub"
+        "clientPort": 3012,
+        "privKeyPath": "../Keys/node2.priv",
+        "pubKeyPath": "../Keys/node2.pub"
     },
     {
         "id": "3",
         "isLeader": false,
         "hostname": "localhost",
         "port": 3003,
-        "privKeyPath": "../PKI/node3.priv",
-        "pubKeyPath": "../PKI/node3.pub"
+        "clientPort": 3013,
+        "privKeyPath": "../Keys/node3.priv",
+        "pubKeyPath": "../Keys/node3.pub"
     },
     {
         "id": "4",
         "isLeader": false,
         "hostname": "localhost",
         "port": 3004,
-        "privKeyPath": "../PKI/node4.priv",
-        "pubKeyPath": "../PKI/node4.pub"
+        "clientPort": 3014,
+        "privKeyPath": "../Keys/node4.priv",
+        "pubKeyPath": "../Keys/node4.pub"
     }
 ]
