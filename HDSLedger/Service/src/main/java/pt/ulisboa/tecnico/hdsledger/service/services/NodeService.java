@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
@@ -22,6 +21,7 @@ import pt.ulisboa.tecnico.hdsledger.communication.PrepareMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.ConsensusMessageBuilder;
 import pt.ulisboa.tecnico.hdsledger.service.models.InstanceInfo;
 import pt.ulisboa.tecnico.hdsledger.service.models.MessageBucket;
+import pt.ulisboa.tecnico.hdsledger.service.models.ProgressIndicator;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
@@ -55,6 +55,11 @@ public class NodeService implements UDPService {
     private final AtomicInteger consensusInstance = new AtomicInteger(0);
     // Last decided consensus instance
     private final AtomicInteger lastDecidedConsensusInstance = new AtomicInteger(0);
+
+    // Progress indicator
+    private final ProgressIndicator progressIndicator = new ProgressIndicator();
+    // Changing round
+    private final AtomicBoolean changingRound = new AtomicBoolean(false);
 
     // Ledger (for now, just a list of strings)
     private ArrayList<String> ledger = new ArrayList<String>();
@@ -351,6 +356,27 @@ public class NodeService implements UDPService {
         startConsensus(message.getMessage()); // if the node is not the leader, it won't start a consensus, it will just store the request
     }
 
+    /*
+     * Handle round change request -> ROUND-CHANGE(consensusInstanceId, roundToChangeTo, lastPreparedRound?, lastPreparedValue?) 
+     *                                                                                      [? means it can be null]
+     * upon receiving f+1 round change requests, the node will broadcast a round change request
+     *    why: at least one correct node is asking to changing round
+     *    ROUND-CHANGE(consensusInstanceId, min(roundToChangeTo), lastPreparedRound?, lastPreparedValue?) -- last two values are associated with the second
+     * upon receiving 2f+1 round change requests, 
+     *    why: a majority of correct nodes are asking to change round
+     *    StartConsensus(consensusInstanceId, )
+     */
+    public synchronized void uponRoundChangeRequest(ConsensusMessage message) {
+        int consensusInstance = message.getConsensusInstance();
+        int round = message.getRound();
+
+        LOGGER.log(Level.INFO,
+                MessageFormat.format("{0} - Received ROUND_CHANGE message from {1}: Consensus Instance {2}, Round {3}",
+                        config.getId(), message.getSenderId(), consensusInstance, round));
+
+        
+    }
+
     @Override
     public void listen() {
         try {
@@ -433,6 +459,32 @@ public class NodeService implements UDPService {
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
+                }
+            }).start();
+
+            // Thread to trigger round change through timeouts
+            new Thread(() -> {
+                while (true) {
+                    try {
+                        Thread.sleep(progressIndicator.getTimeout());
+                        if (changingRound.get()) {
+                            continue;
+                        }
+                        if (progressIndicator.isFrozen()) {
+                            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Progress is frozen, broadcasting round change",
+                                    config.getId()));
+                            instanceInfo.get(consensusInstance.get()).incrementRound();
+                            this.changingRound.set(true);
+                            progressIndicator.resetProgress();
+                            this.nodeLink.broadcastPort(
+                                new ConsensusMessageBuilder(config.getId(), Message.Type.ROUND_CHANGE)
+                                    .setRound(instanceInfo.get(consensusInstance.get()).getCurrentRound())
+                                    .setConsensusInstance(consensusInstance.get())
+                                    .build());
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
             }).start();
         } catch (Exception e) {

@@ -63,4 +63,8 @@ public class InstanceInfo {
     public void setCommitMessage(CommitMessage commitMessage) {
         this.commitMessage = commitMessage;
     }
+
+    public void incrementRound() {
+        currentRound++;
+    }
 }
