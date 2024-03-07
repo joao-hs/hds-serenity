@@ -6,7 +6,8 @@ public enum ErrorMessage {
     NoSuchNode("Can't send a message to a non existing node"),
     SocketSendingError("Error while sending message"),
     SigningMessageError("Error while signign message"),
-    CannotOpenSocket("Error while opening socket");
+    CannotOpenSocket("Error while opening socket"),
+    ClientNotFound("The client with the given ID was not found");
 
     private final String message;
 

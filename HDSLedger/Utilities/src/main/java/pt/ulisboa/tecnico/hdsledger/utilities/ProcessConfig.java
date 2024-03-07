@@ -11,6 +11,8 @@ public class ProcessConfig {
 
     private int port;
 
+    private int clientPort; // port to listen for client requests
+
     private String pubKeyPath;
 
     private String privKeyPath;
@@ -21,6 +23,10 @@ public class ProcessConfig {
 
     public int getPort() {
         return port;
+    }
+
+    public int getClientPort() {
+        return clientPort;
     }
 
     public String getId() {

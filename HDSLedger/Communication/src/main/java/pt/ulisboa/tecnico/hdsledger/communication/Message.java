@@ -43,4 +43,13 @@ public class Message implements Serializable {
     public void setType(Type type) {
         this.type = type;
     }
+
+    @Override
+    public String toString() {
+        return "Message{" +
+                "senderId='" + senderId + '\'' +
+                ", messageId=" + messageId +
+                ", type=" + type +
+                '}';
+    }
 }

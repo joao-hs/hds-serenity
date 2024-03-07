@@ -8,6 +8,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Optional;
 
 public class ProcessConfigBuilder {
 
@@ -24,6 +26,10 @@ public class ProcessConfigBuilder {
         } catch (IOException | JsonSyntaxException e) {
             throw new HDSSException(ErrorMessage.ConfigFileFormat);
         }
+    }
+
+    public Optional<ProcessConfig> idFromFile(String path, String id) {
+        return Arrays.stream(fromFile(path)).filter(n -> id.equals(n.getId())).findFirst();
     }
 
 }
