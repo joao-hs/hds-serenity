@@ -31,6 +31,10 @@ public class ConsensusMessage extends Message {
         return new Gson().fromJson(this.message, CommitMessage.class);
     }
 
+    public RoundChange deserializeRoundChangeMessage() {
+        return new Gson().fromJson(this.message, RoundChange.class);
+    }
+    
     public String getMessage() {
         return message;
     }

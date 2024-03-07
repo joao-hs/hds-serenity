@@ -1,11 +1,7 @@
 package pt.ulisboa.tecnico.hdsledger.communication;
 
-public class RoundChange extends Message {
+public class RoundChange extends ConsensusMessage {
     
-    // Consensus instance
-    private int consensusInstance;
-    // Round to change to
-    private int round;
     // Round that has been prepared
     private int lastPreparedRound = -1;
     // Value that has been prepared
@@ -15,6 +11,19 @@ public class RoundChange extends Message {
         super(senderId, type);
     }
 
-    
+    public int getLastPreparedRound(){
+        return this.lastPreparedRound;
+    }
 
+    public String getLastPreparedValue(){
+        return this.lastPreparedValue;
+    }
+
+    public void setLastPreparedRound(int lastPreparedRound){
+        this.lastPreparedRound = lastPreparedRound;
+    }
+        
+    public void setLastPreparedValue(int lastPreparedValue){
+        this.lastPreparedValue = lastPreparedValue;
+    }
 }
