@@ -1,3 +1,4 @@
 HDSLedger/*/target/*
 HDSLedger/.venv/*
 .vscode
+.idea

@@ -2,23 +2,27 @@ package pt.ulisboa.tecnico.hdsledger.service.services;
 
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
+import java.util.Comparator;
+import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
-import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
-import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
+import org.apache.commons.lang3.tuple.Pair;
+import pt.ulisboa.tecnico.hdsledger.communication.builder.ConsensusMessageBuilder;
 import pt.ulisboa.tecnico.hdsledger.communication.Link;
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
+import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.PrePrepareMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.PrepareMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.builder.ConsensusMessageBuilder;
+import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
+import pt.ulisboa.tecnico.hdsledger.communication.RoundChange;
 import pt.ulisboa.tecnico.hdsledger.service.models.InstanceInfo;
 import pt.ulisboa.tecnico.hdsledger.service.models.MessageBucket;
 import pt.ulisboa.tecnico.hdsledger.service.models.ProgressIndicator;
@@ -46,6 +50,8 @@ public class NodeService implements UDPService {
     private final MessageBucket prepareMessages;
     // Consensus instance -> Round -> List of commit messages
     private final MessageBucket commitMessages;
+    // Round -> List of round change request messages
+    private final MessageBucket roundChangeRequestMessages;
 
     // Store if already received pre-prepare for a given <consensus, round>
     private final Map<Integer, Map<Integer, Boolean>> receivedPrePrepare = new ConcurrentHashMap<>();
@@ -75,6 +81,7 @@ public class NodeService implements UDPService {
 
         this.prepareMessages = new MessageBucket(nodesConfig.length);
         this.commitMessages = new MessageBucket(nodesConfig.length);
+        this.roundChangeRequestMessages = new MessageBucket(nodesConfig.length);
     }
 
     public ProcessConfig getConfig() {
@@ -118,7 +125,7 @@ public class NodeService implements UDPService {
         int localConsensusInstance = this.consensusInstance.incrementAndGet();
         InstanceInfo existingConsensus = this.instanceInfo.put(localConsensusInstance, new InstanceInfo(value));
 
-        // If startConsensus was already called for a given round
+        // If startConsensus was called for localConsensusInstance
         if (existingConsensus != null) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Node already started consensus for instance {1}",
                     config.getId(), localConsensusInstance));
@@ -145,6 +152,42 @@ public class NodeService implements UDPService {
             LOGGER.log(Level.INFO,
                     MessageFormat.format("{0} - Node is not leader, waiting for PRE-PREPARE message", config.getId()));
         }
+    }
+
+    private Optional<Pair<Integer, String>> highestPrepared(List<ConsensusMessage> quorumRoundChange) {
+        Optional<RoundChange> roundChange = quorumRoundChange.stream()
+            .filter(message -> message.getType() == Message.Type.ROUND_CHANGE)
+            .map(RoundChange.class::cast)
+            .filter(rc -> rc.getLastPreparedRound() != null)
+            .max(Comparator.comparing(rc -> rc.getLastPreparedRound()));
+        if (roundChange.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(Pair.of(roundChange.get().getLastPreparedRound(), roundChange.get().getLastPreparedValue()));
+    }
+
+    private boolean justifyPrePrepare(int instanceId, InstanceInfo instanceInfo) {
+        int round = instanceInfo.getCurrentRound();
+        return (round == 1) ||
+                roundChangeRequestMessages.getMessagesFromRound(round).stream()
+                        .filter(consensusMessage -> consensusMessage.getType() == Message.Type.ROUND_CHANGE)
+                        .map(RoundChange.class::cast)
+                        .allMatch(roundChange ->
+                                roundChange.getLastPreparedRound() == null && roundChange.getLastPreparedValue() == null) ||
+                highestPrepared(roundChangeRequestMessages.getMessagesFromRound(round)).orElse(Pair.of(-1, ""))
+                        .getRight().equals(prepareMessages.hasValidPrepareQuorum(config.getId(), instanceId, round).orElse(null));
+    }
+
+    private boolean justifyRoundChange(int instanceId, InstanceInfo instanceInfo, List<ConsensusMessage> quorumRoundChange) {
+        int round = instanceInfo.getCurrentRound();
+        return roundChangeRequestMessages.getMessagesFromRound(round).stream()
+                .filter(consensusMessage -> consensusMessage.getType() == Message.Type.ROUND_CHANGE)
+                .map(RoundChange.class::cast)
+                .allMatch(roundChange ->
+                        roundChange.getLastPreparedRound() == null && roundChange.getLastPreparedValue() == null) ||
+                highestPrepared(roundChangeRequestMessages.getMessagesFromRound(round)).orElse(Pair.of(-1, ""))
+                        .getRight().equals(prepareMessages.hasValidPrepareQuorum(config.getId(), instanceId, round).orElse(null));
+
     }
 
     /*
@@ -365,6 +408,7 @@ public class NodeService implements UDPService {
      * upon receiving 2f+1 round change requests, 
      *    why: a majority of correct nodes are asking to change round
      *    StartConsensus(consensusInstanceId, )
+    TODO: store message in bucket
      */
     public synchronized void uponRoundChangeRequest(ConsensusMessage message) {
         int consensusInstance = message.getConsensusInstance();

@@ -1,6 +1,7 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -8,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.PrepareMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.RoundChange;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 
 public class MessageBucket {
@@ -15,11 +17,13 @@ public class MessageBucket {
     private static final CustomLogger LOGGER = new CustomLogger(MessageBucket.class.getName());
     // Quorum size
     private final int quorumSize;
+    // Maximum number of Byzantine nodes
+    private final int f;
     // Instance -> Round -> Sender ID -> Consensus message
     private final Map<Integer, Map<Integer, Map<String, ConsensusMessage>>> bucket = new ConcurrentHashMap<>();
 
     public MessageBucket(int nodeCount) {
-        int f = Math.floorDiv(nodeCount - 1, 3);
+        this.f = Math.floorDiv(nodeCount - 1, 3);
         quorumSize = Math.floorDiv(nodeCount + f, 2) + 1;
     }
 
@@ -80,7 +84,7 @@ public class MessageBucket {
         HashMap<String, Integer> frequency = new HashMap<>();
         bucket.get(instance).get(round).values().forEach((message) -> {
             RoundChange roundChangeMessage = message.deserializeRoundChangeMessage();
-            String value = roundChangeMessage.getValue();
+            String value = roundChangeMessage.getMessage();
             frequency.put(value, frequency.getOrDefault(value, 0) + 1);
         });
 
@@ -98,7 +102,7 @@ public class MessageBucket {
         HashMap<String, Integer> frequency = new HashMap<>();
         bucket.get(instance).get(round).values().forEach((message) -> {
             RoundChange roundChangeMessage = (RoundChange)(message).deserializeRoundChangeMessage();
-            String value = roundChangeMessage.getValue();
+            String value = roundChangeMessage.getMessage();
             frequency.put(value, frequency.getOrDefault(value, 0) + 1);
         });
 
@@ -113,5 +117,12 @@ public class MessageBucket {
 
     public Map<String, ConsensusMessage> getMessages(int instance, int round) {
         return bucket.get(instance).get(round);
+    }
+
+    public List<ConsensusMessage> getMessagesFromRound(int round) {
+        return bucket.values().stream()
+                .flatMap((Map<Integer, Map<String, ConsensusMessage>> roundMap) ->
+                        roundMap.get(round).values().stream())
+                .toList();
     }
 }
