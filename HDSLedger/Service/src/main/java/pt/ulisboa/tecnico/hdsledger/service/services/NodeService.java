@@ -65,7 +65,7 @@ public class NodeService implements UDPService {
     // Progress indicator
     private final ProgressIndicator progressIndicator = new ProgressIndicator();
     // Changing round
-    private final AtomicBoolean changingRound = new AtomicBoolean(false);
+    private final AtomicBoolean stopTimeout = new AtomicBoolean(true);
 
     // Ledger (for now, just a list of strings)
     private ArrayList<String> ledger = new ArrayList<String>();
@@ -141,6 +141,7 @@ public class NodeService implements UDPService {
                 e.printStackTrace();
             }
         }
+        this.stopTimeout.set(false);
 
         // Leader broadcasts PRE-PREPARE message
         if (this.config.isLeader()) {
@@ -166,8 +167,7 @@ public class NodeService implements UDPService {
         return Optional.of(Pair.of(roundChange.get().getLastPreparedRound(), roundChange.get().getLastPreparedValue()));
     }
 
-    private boolean justifyPrePrepare(int instanceId, InstanceInfo instanceInfo) {
-        int round = instanceInfo.getCurrentRound();
+    private boolean justifyPrePrepare(int instanceId, int round) {
         return (round == 1) ||
                 roundChangeRequestMessages.getMessagesFromRound(round).stream()
                         .filter(consensusMessage -> consensusMessage.getType() == Message.Type.ROUND_CHANGE)
@@ -213,12 +213,13 @@ public class NodeService implements UDPService {
                         config.getId(), senderId, consensusInstance, round));
 
         // Verify if pre-prepare was sent by leader
-        if (!isLeader(senderId))
+        if (!isLeader(senderId) || !justifyPrePrepare(consensusInstance, round))
             return;
 
         // Set instance value
         this.instanceInfo.putIfAbsent(consensusInstance, new InstanceInfo(value));
 
+        
         // Within an instance of the algorithm, each upon rule is triggered at most once
         // for any round r
         receivedPrePrepare.putIfAbsent(consensusInstance, new ConcurrentHashMap<>());
@@ -229,6 +230,9 @@ public class NodeService implements UDPService {
                                     + "replying again to make sure it reaches the initial sender",
                             config.getId(), consensusInstance, round));
         }
+
+        this.stopTimeout.set(false);
+        progressIndicator.registerProgress();
 
         PrepareMessage prepareMessage = new PrepareMessage(prePrepareMessage.getValue());
 
@@ -296,6 +300,10 @@ public class NodeService implements UDPService {
         // Find value with valid quorum
         Optional<String> preparedValue = prepareMessages.hasValidPrepareQuorum(config.getId(), consensusInstance, round);
         if (preparedValue.isPresent() && instance.getPreparedRound() < round) {
+
+            this.stopTimeout.set(false);
+            progressIndicator.registerProgress();
+
             instance.setPreparedValue(preparedValue.get());
             instance.setPreparedRound(round);
 
@@ -387,6 +395,8 @@ public class NodeService implements UDPService {
 
             lastDecidedConsensusInstance.getAndIncrement();
 
+            this.stopTimeout.set(true);
+            
             LOGGER.log(Level.INFO,
                     MessageFormat.format(
                             "{0} - Decided on Consensus Instance {1}, Round {2}, Successful? {3}",
@@ -511,14 +521,14 @@ public class NodeService implements UDPService {
                 while (true) {
                     try {
                         Thread.sleep(progressIndicator.getTimeout());
-                        if (changingRound.get()) {
+                        if (stopTimeout.get()) {
                             continue;
                         }
                         if (progressIndicator.isFrozen()) {
                             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Progress is frozen, broadcasting round change",
                                     config.getId()));
                             instanceInfo.get(consensusInstance.get()).incrementRound();
-                            this.changingRound.set(true);
+                            this.stopTimeout.set(true);
                             progressIndicator.resetProgress();
                             this.nodeLink.broadcastPort(
                                 new ConsensusMessageBuilder(config.getId(), Message.Type.ROUND_CHANGE)
