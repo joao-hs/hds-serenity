@@ -119,10 +119,23 @@ public class MessageBucket {
         return bucket.get(instance).get(round);
     }
 
+
     public List<ConsensusMessage> getMessagesFromRound(int round) {
         return bucket.values().stream()
                 .flatMap((Map<Integer, Map<String, ConsensusMessage>> roundMap) ->
                         roundMap.get(round).values().stream())
                 .toList();
+    }
+
+    public int lowestRoundinRoundChangeMessages(int instance, int round){
+        Map<String,ConsensusMessage> roundChangeValues = bucket.get(instance).get(round).values()
+        int final_round;
+        Collection<ConsensusMessage> roundChangeValues = roundChangeMessages.values();
+        for(ConsensusMessage value: roundChangeValues){
+            if(value.getRound() < round){
+                final_round = value.getRound();
+            }
+        }
+        return final_round;
     }
 }
