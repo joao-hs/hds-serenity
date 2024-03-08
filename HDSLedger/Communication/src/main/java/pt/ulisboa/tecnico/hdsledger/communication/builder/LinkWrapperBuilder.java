@@ -18,6 +18,15 @@ public class LinkWrapperBuilder {
             case SLOW:
                 this.instance = new SlowLinkWrapper(self, port, nodes, messageClass);
                 break;
+            case DROP:
+                this.instance = new IgnoreMessagesLinkWrapper(self, port, nodes, messageClass);
+                break;
+            case WRONG_VALUE:
+                this.instance = new WrongValueLinkWrapper(self, port, nodes, messageClass);
+                break;
+            case WRONG_COMMIT:
+                this.instance = new WrongCommitLinkWrapper(self, port, nodes, messageClass);
+                break;
             default:
                 this.instance = new RegularLinkWrapper(self, port, nodes, messageClass);
                 break;

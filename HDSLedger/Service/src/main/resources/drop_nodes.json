@@ -1,0 +1,38 @@
+[
+    {   
+        "id": "1",
+        "hostname": "localhost",
+        "port": 3001,
+        "clientPort": 3011,
+        "privKeyPath": "../Keys/node1.priv",
+        "pubKeyPath": "../Keys/node1.pub",
+        "persona": "DROP_BYZANTINE"
+    },
+    {
+        "id": "2",
+        "hostname": "localhost",
+        "port": 3002,
+        "clientPort": 3012,
+        "privKeyPath": "../Keys/node2.priv",
+        "pubKeyPath": "../Keys/node2.pub",
+        "persona": "DROP_BYZANTINE"
+    },
+    {
+        "id": "3",
+        "hostname": "localhost",
+        "port": 3003,
+        "clientPort": 3013,
+        "privKeyPath": "../Keys/node3.priv",
+        "pubKeyPath": "../Keys/node3.pub",
+        "persona": "DROP_BYZANTINE"
+    },
+    {
+        "id": "4",
+        "hostname": "localhost",
+        "port": 3004,
+        "clientPort": 3014,
+        "privKeyPath": "../Keys/node4.priv",
+        "pubKeyPath": "../Keys/node4.pub",
+        "persona": "DROP_BYZANTINE"
+    }
+]

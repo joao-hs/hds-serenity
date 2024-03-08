@@ -7,6 +7,8 @@ public class ProcessConfig {
         REGULAR,
         SLOW,
         BYZANTINE_DROP,
+        WRONG_VALUE,
+        WRONG_COMMIT
     }
 
     private String hostname;
