@@ -8,7 +8,8 @@ public class ProcessConfig {
         SLOW,
         DROP,
         WRONG_VALUE,
-        WRONG_COMMIT
+        WRONG_COMMIT,
+        ROUND_CHANGE
     }
 
     private String hostname;
