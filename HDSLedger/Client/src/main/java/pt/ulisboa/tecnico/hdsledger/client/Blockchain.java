@@ -1,6 +1,6 @@
 package pt.ulisboa.tecnico.hdsledger.client;
 
-import pt.ulisboa.tecnico.hdsledger.communication.Link;
+import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.BlockchainResponse;
 
 import java.io.IOException;
@@ -9,6 +9,7 @@ import java.util.logging.Level;
 
 import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
+import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
@@ -18,13 +19,13 @@ public class Blockchain {
     private ProcessConfig clientConfig;
     private Integer N_nodes;
     private Integer F_nodes;
-    private Link link;
+    private LinkWrapper link;
 
     public Blockchain(ProcessConfig clientConfig, ProcessConfig[] nodesConfig) {
         this.clientConfig = clientConfig;
         this.N_nodes = nodesConfig.length;
         this.F_nodes = Math.floorDiv(N_nodes - 1, 3);
-        this.link = new Link(clientConfig, clientConfig.getPort(), nodesConfig, BlockchainResponse.class);
+        this.link = new RegularLinkWrapper(clientConfig, clientConfig.getPort(), nodesConfig, BlockchainResponse.class);
     }
 
     /*

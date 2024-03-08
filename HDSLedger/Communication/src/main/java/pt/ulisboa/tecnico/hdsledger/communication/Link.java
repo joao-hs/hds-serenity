@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
-public class Link {
+public class Link implements LinkInterface {
 
     private static final CustomLogger LOGGER = new CustomLogger(Link.class.getName());
     // Time to wait for an ACK before resending the message
@@ -37,13 +37,19 @@ public class Link {
     // Send messages to self by pushing to queue instead of through the network
     private final Queue<Message> localhostQueue = new ConcurrentLinkedQueue<>();
 
-    public Link(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass) {
-        this(self, port, nodes, messageClass, false, 200);
+    // Link wrapper to have behavior of nodes expressed in Links
+    // Need to pass-throught to link to make sure that the link interacts
+    // with himself through the wrapper
+    private LinkWrapper linkWrapper;
+
+
+    public Link(LinkWrapper linkWrapper, ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass) {
+        this(linkWrapper, self, port, nodes, messageClass, false, 200);
     }
 
-    public Link(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass,
+    public Link(LinkWrapper linkWrapper, ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass,
             boolean activateLogs, int baseSleepTime) {
-
+        this.linkWrapper = linkWrapper;
         this.config = self;
         this.messageClass = messageClass;
         this.BASE_SLEEP_TIME = baseSleepTime;
@@ -75,12 +81,12 @@ public class Link {
      */
     public void broadcastPort(Message data) {
         Gson gson = new Gson();
-        nodes.forEach((destId, dest) -> sendPort(destId, gson.fromJson(gson.toJson(data), data.getClass())));
+        nodes.forEach((destId, dest) -> this.linkWrapper.sendPort(destId, gson.fromJson(gson.toJson(data), data.getClass())));
     }
 
     public void broadcastClientPort(Message data) {
         Gson gson = new Gson();
-        nodes.forEach((destId, dest) -> sendClientPort(destId, gson.fromJson(gson.toJson(data), data.getClass())));
+        nodes.forEach((destId, dest) -> this.linkWrapper.sendClientPort(destId, gson.fromJson(gson.toJson(data), data.getClass())));
     }
 
     public void sendPort(String nodeId, Message data) {
@@ -88,7 +94,7 @@ public class Link {
         if (node == null)
             throw new HDSSException(ErrorMessage.NoSuchNode);
 
-        send(nodeId, node.getPort(), data);
+        this.linkWrapper.send(nodeId, node.getPort(), data);
     }
 
     public void sendClientPort(String nodeId, Message data) {
@@ -96,7 +102,7 @@ public class Link {
         if (node == null)
             throw new HDSSException(ErrorMessage.NoSuchNode);
 
-        send(nodeId, node.getClientPort(), data);
+        this.linkWrapper.send(nodeId, node.getClientPort(), data);
     }
 
     /*
@@ -140,7 +146,7 @@ public class Link {
                             "{0} - Sending {1} message to {2}:{3} with message ID {4} - Attempt #{5}", config.getId(),
                             data.getType(), destAddress, destPort, messageId, count++));
 
-                    unreliableSend(destAddress, destPort, data);
+                    this.linkWrapper.unreliableSend(destAddress, destPort, data);
 
                     // Wait (using exponential back-off), then look for ACK
                     Thread.sleep(sleepTime);
@@ -298,7 +304,7 @@ public class Link {
             // we're assuming an eventually synchronous network
             // Even if a node receives the message multiple times,
             // it will discard duplicates
-            unreliableSend(address, port, responseMessage);
+            this.linkWrapper.unreliableSend(address, port, responseMessage);
         }
         
         return message;
@@ -311,7 +317,7 @@ public class Link {
         //Collections.shuffle(nodes); //Comment until todo is done
 
         for (int i = 0; i < n - 1; i++) {
-            sendPort(nodes.get(i), data);
+            this.linkWrapper.sendPort(nodes.get(i), data);
         }
     }
 
@@ -322,7 +328,7 @@ public class Link {
         //Collections.shuffle(nodes); //Comment until todo is done
 
         for (int i = 0; i < n - 1; i++) {
-            sendClientPort(nodes.get(i), data);
+            this.linkWrapper.sendClientPort(nodes.get(i), data);
         }
     }
 }

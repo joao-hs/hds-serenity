@@ -2,7 +2,9 @@ package pt.ulisboa.tecnico.hdsledger.service;
 
 import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.Link;
+import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
+import pt.ulisboa.tecnico.hdsledger.communication.builder.LinkWrapperBuilder;
+import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.service.services.NodeService;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
@@ -42,11 +44,12 @@ public class Node {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Running at {1}:{2}:{3}; is leader: {4}",
                 nodeConfig.getId(), nodeConfig.getHostname(), nodeConfig.getPort(), nodeConfig.getClientPort()));
 
-            // Abstraction to send and receive messages
-            Link linkToNodes = new Link(nodeConfig, nodeConfig.getPort(), nodeConfigs,
-                ConsensusMessage.class);
             
-            Link linkToClients = new Link(nodeConfig, nodeConfig.getClientPort(), clientConfigs,
+            // Abstraction to send and receive messages
+            LinkWrapper linkToNodes = new LinkWrapperBuilder(nodeConfig, nodeConfig.getPort(), nodeConfigs,
+                ConsensusMessage.class).build();
+            
+            LinkWrapper linkToClients = new RegularLinkWrapper(nodeConfig, nodeConfig.getClientPort(), clientConfigs,
                 BlockchainRequest.class);
 
             // Services that implement listen from UDPService

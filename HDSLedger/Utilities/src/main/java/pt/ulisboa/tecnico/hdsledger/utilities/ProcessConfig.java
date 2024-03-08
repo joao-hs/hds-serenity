@@ -3,6 +3,12 @@ package pt.ulisboa.tecnico.hdsledger.utilities;
 public class ProcessConfig {
     public ProcessConfig() {}
 
+    public enum Persona {
+        REGULAR,
+        SLOW,
+        BYZANTINE_DROP,
+    }
+
     private String hostname;
 
     private String id;
@@ -14,6 +20,8 @@ public class ProcessConfig {
     private String pubKeyPath;
 
     private String privKeyPath;
+
+    private Persona persona;
 
     public int getPort() {
         return port;
@@ -37,6 +45,10 @@ public class ProcessConfig {
 
     public String getPrivKeyPath() {
         return privKeyPath;
+    }
+
+    public Persona getPersona() {
+        return persona;
     }
 
 }

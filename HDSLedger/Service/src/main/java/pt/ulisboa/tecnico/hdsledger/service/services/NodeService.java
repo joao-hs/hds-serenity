@@ -16,7 +16,7 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.tuple.Pair;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.ConsensusMessageBuilder;
-import pt.ulisboa.tecnico.hdsledger.communication.Link;
+import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.PrePrepareMessage;
@@ -40,10 +40,10 @@ public class NodeService implements UDPService {
     private final ProcessConfig config;
 
     // Link to communicate with nodes
-    private final Link nodeLink;
+    private final LinkWrapper nodeLink;
 
     // Link to communicate with clients
-    private final Link clientLink;
+    private final LinkWrapper clientLink;
 
     // Consensus instance -> Round -> List of prepare messages
     private final MessageBucket prepareMessages;
@@ -70,7 +70,7 @@ public class NodeService implements UDPService {
     // Ledger (for now, just a list of strings)
     private ArrayList<String> ledger = new ArrayList<String>();
 
-    public NodeService(Link nodeLink, Link clientLink, ProcessConfig config, ProcessConfig[] nodesConfig) {
+    public NodeService(LinkWrapper nodeLink, LinkWrapper clientLink, ProcessConfig config, ProcessConfig[] nodesConfig) {
 
         this.nodeLink = nodeLink;
         this.clientLink = clientLink;
