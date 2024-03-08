@@ -1,16 +1,23 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
 
 public class InstanceInfo {
 
-    private int currentRound = -1;
+    private int currentRound = 1;
     private int preparedRound = -1;
     private String preparedValue;
     private CommitMessage commitMessage;
     private String inputValue;
     private int committedRound = -1;
+
+    public InstanceInfo(String inputValue) {
+        this.inputValue = inputValue;
+    }
 
     public InstanceInfo(int currentRound, String inputValue) {
         this.currentRound = currentRound;
@@ -23,6 +30,10 @@ public class InstanceInfo {
 
     public void setCurrentRound(int currentRound) {
         this.currentRound = currentRound;
+    }
+
+    public void incrementRound() {
+        currentRound++;
     }
 
     public int getPreparedRound() {
@@ -65,4 +76,8 @@ public class InstanceInfo {
         this.commitMessage = commitMessage;
     }
 
+    @Override
+    public String toString() {
+        return new GsonBuilder().setPrettyPrinting().create().toJson(this);
+    }
 }

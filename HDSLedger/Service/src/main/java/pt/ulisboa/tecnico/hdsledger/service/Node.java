@@ -41,7 +41,7 @@ public class Node {
 
             ProcessConfig[] clientConfigs = new ProcessConfigBuilder().fromFile(clientConfigPath);
 
-            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Running at {1}:{2}:{3}; is leader: {4}",
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Running at {1}:({2}:{3});",
                 nodeConfig.getId(), nodeConfig.getHostname(), nodeConfig.getPort(), nodeConfig.getClientPort()));
 
             

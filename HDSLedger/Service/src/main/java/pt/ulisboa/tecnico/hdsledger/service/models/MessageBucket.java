@@ -1,13 +1,12 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
-import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import com.google.gson.Gson;
@@ -120,17 +119,14 @@ public class MessageBucket {
         return bucket.get(instance).get(round);
     }
 
-
-    public List<ConsensusMessage> getMessagesFromRound(int round) {
-        LOGGER.log(Level.INFO, MessageFormat.format("Getting messages from round {0}\nBucket: {1} ", round, bucket.toString()));
-        List<ConsensusMessage> messages = new LinkedList<>();
-        for (Map<Integer, Map<String, ConsensusMessage>> roundSenderToMessageMap : bucket.values()) {
-            if (roundSenderToMessageMap.containsKey(round)) {
-                if (roundSenderToMessageMap.get(round) != null)
-                    messages.addAll(roundSenderToMessageMap.get(round).values());
-            }
+    public List<RoundChange> getRoundChangeMessages(int instance, int round) {
+        Collection<ConsensusMessage> allMessages = bucket.get(instance).get(round).values();
+        if (allMessages.isEmpty()) {
+            return Collections.emptyList();
         }
-        return messages;   
+        return allMessages.stream()
+            .map((message) -> message.deserializeRoundChangeMessage())
+            .toList();
     }
 
     public String toString() {
