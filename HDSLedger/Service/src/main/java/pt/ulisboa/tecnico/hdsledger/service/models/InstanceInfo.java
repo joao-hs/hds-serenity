@@ -5,14 +5,15 @@ import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
 
 public class InstanceInfo {
 
-    private int currentRound = 1;
+    private int currentRound = -1;
     private int preparedRound = -1;
     private String preparedValue;
     private CommitMessage commitMessage;
     private String inputValue;
     private int committedRound = -1;
 
-    public InstanceInfo(String inputValue) {
+    public InstanceInfo(int currentRound, String inputValue) {
+        this.currentRound = currentRound;
         this.inputValue = inputValue;
     }
 
@@ -64,8 +65,4 @@ public class InstanceInfo {
         this.commitMessage = commitMessage;
     }
 
-
-    public void incrementRound() {
-        currentRound++;
-    }
 }

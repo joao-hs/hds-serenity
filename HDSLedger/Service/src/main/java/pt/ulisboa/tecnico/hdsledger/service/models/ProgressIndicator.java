@@ -3,7 +3,7 @@ package pt.ulisboa.tecnico.hdsledger.service.models;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProgressIndicator {
-    private AtomicInteger timeout = new AtomicInteger(500); // ms
+    private AtomicInteger timeout = new AtomicInteger(100); // ms
     private Boolean isMakingProgress = Boolean.FALSE;
     private final Object lock = new Object();
 

@@ -1,10 +1,16 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.stream.Stream;
+
+import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
@@ -79,40 +85,35 @@ public class MessageBucket {
         }).findFirst();
     }
 
-    public Optional<String> hasValidRoundChangeQuorum(String nodeId, int instance, int round) {
-        // Create mapping of value to frequency
-        HashMap<String, Integer> frequency = new HashMap<>();
-        bucket.get(instance).get(round).values().forEach((message) -> {
-            RoundChange roundChangeMessage = message.deserializeRoundChangeMessage();
-            String value = roundChangeMessage.getMessage();
-            frequency.put(value, frequency.getOrDefault(value, 0) + 1);
-        });
-
-        // Only one value (if any, thus the optional) will have a frequency
-        // greater than or equal to the quorum size
-        return frequency.entrySet().stream().filter((Map.Entry<String, Integer> entry) -> {
-            return entry.getValue() >= quorumSize;
-        }).map((Map.Entry<String, Integer> entry) -> {
-            return entry.getKey();
-        }).findFirst();
+    public boolean hasValidRoundChangeQuorum(String nodeId, int instance, int round) {
+        return bucket.get(instance).get(round).size() >= 2 * f + 1;
     }
 
-        public Optional<String> hasValidRoundChangeSet(String nodeId, int instance, int round) {
-        // Create mapping of value to frequency
-        HashMap<String, Integer> frequency = new HashMap<>();
-        bucket.get(instance).get(round).values().forEach((message) -> {
-            RoundChange roundChangeMessage = (RoundChange)(message).deserializeRoundChangeMessage();
-            String value = roundChangeMessage.getMessage();
-            frequency.put(value, frequency.getOrDefault(value, 0) + 1);
-        });
+    /*
+     * Is valid if:
+     * f+1 round change messages are received with:
+     * - the same instance
+     * - higher round
+     * return the round change message with the lowest round
+     * else, return optional.empty
+     */
+    public Optional<RoundChange> hasValidRoundChangeSet(String nodeId, int instance, int round) {
+        // 1. Count the number of round change messages with the same instance and higher round
+        
+        Stream<ConsensusMessage> validRoundChangeMessages = bucket.get(instance).get(round).values()
+            .stream()
+            .filter((message) -> message.getConsensusInstance() == instance)
+            .filter((message) -> message.getRound() > round);
 
-        // Only one value (if any, thus the optional) will have a frequency
-        // greater than or equal to the quorum size
-        return frequency.entrySet().stream().filter((Map.Entry<String, Integer> entry) -> {
-            return entry.getValue() >= quorumSize - f;
-        }).map((Map.Entry<String, Integer> entry) -> {
-            return entry.getKey();
-        }).findFirst();
+        if (validRoundChangeMessages.count() < f + 1) {
+            return Optional.empty();
+        }
+
+        // 2. Find the round change message with the lowest round
+
+        return validRoundChangeMessages
+            .map((message) -> message.deserializeRoundChangeMessage())
+            .min((message1, message2) -> message1.getRound() - message2.getRound());
     }
 
     public Map<String, ConsensusMessage> getMessages(int instance, int round) {
@@ -121,21 +122,18 @@ public class MessageBucket {
 
 
     public List<ConsensusMessage> getMessagesFromRound(int round) {
-        return bucket.values().stream()
-                .flatMap((Map<Integer, Map<String, ConsensusMessage>> roundMap) ->
-                        roundMap.get(round).values().stream())
-                .toList();
-    }
-
-    public int lowestRoundinRoundChangeMessages(int instance, int round){
-        Map<String,ConsensusMessage> roundChangeValues = bucket.get(instance).get(round).values()
-        int final_round;
-        Collection<ConsensusMessage> roundChangeValues = roundChangeMessages.values();
-        for(ConsensusMessage value: roundChangeValues){
-            if(value.getRound() < round){
-                final_round = value.getRound();
+        LOGGER.log(Level.INFO, MessageFormat.format("Getting messages from round {0}\nBucket: {1} ", round, bucket.toString()));
+        List<ConsensusMessage> messages = new LinkedList<>();
+        for (Map<Integer, Map<String, ConsensusMessage>> roundSenderToMessageMap : bucket.values()) {
+            if (roundSenderToMessageMap.containsKey(round)) {
+                if (roundSenderToMessageMap.get(round) != null)
+                    messages.addAll(roundSenderToMessageMap.get(round).values());
             }
         }
-        return final_round;
+        return messages;   
+    }
+
+    public String toString() {
+        return new Gson().toJson(bucket);
     }
 }
