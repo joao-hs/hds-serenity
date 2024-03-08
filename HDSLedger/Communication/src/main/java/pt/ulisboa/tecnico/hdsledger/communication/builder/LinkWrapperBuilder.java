@@ -4,8 +4,11 @@ import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.Link;
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
+import pt.ulisboa.tecnico.hdsledger.communication.personas.IgnoreMessagesLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.SlowLinkWrapper;
+import pt.ulisboa.tecnico.hdsledger.communication.personas.WrongCommitLinkWrapper;
+import pt.ulisboa.tecnico.hdsledger.communication.personas.WrongValueLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig.Persona;
 

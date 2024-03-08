@@ -6,7 +6,7 @@ public class ProcessConfig {
     public enum Persona {
         REGULAR,
         SLOW,
-        BYZANTINE_DROP,
+        DROP,
         WRONG_VALUE,
         WRONG_COMMIT
     }
