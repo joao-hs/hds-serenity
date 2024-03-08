@@ -505,8 +505,8 @@ public class NodeService implements UDPService {
 
             instance.setCurrentRound(roundChangeSetValue.get().getRound()); // r_i <- r_min
 
-            // TODO: maybe not necessary
             this.stopTimeout.set(false); // set timer to running
+            progressIndicator.registerProgress();
 
             // create <ROUND-CHANGE, lambda_i, r_i, pr_i, pv_i>
             RoundChange rc = new RoundChange(consensusInstance, instance.getCurrentRound(), instance.getPreparedRound(), instance.getPreparedValue());
@@ -622,7 +622,7 @@ public class NodeService implements UDPService {
                             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Progress is frozen, broadcasting round change",
                                     config.getId()));
                             this.currentRound.incrementAndGet();
-                            this.stopTimeout.set(true);
+                            this.stopTimeout.set(false);
                             progressIndicator.resetProgress();
                             this.nodeLink.broadcastPort(
                                 new ConsensusMessageBuilder(config.getId(), Message.Type.ROUND_CHANGE)
