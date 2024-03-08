@@ -6,7 +6,7 @@
         "clientPort": 3011,
         "privKeyPath": "../Keys/node1.priv",
         "pubKeyPath": "../Keys/node1.pub",
-        "persona": "WRONG_VALUE"
+        "persona": "REGULAR"
     },
     {
         "id": "2",
@@ -15,7 +15,7 @@
         "clientPort": 3012,
         "privKeyPath": "../Keys/node2.priv",
         "pubKeyPath": "../Keys/node2.pub",
-        "persona": "WRONG_VALUE"
+        "persona": "REGULAR"
     },
     {
         "id": "3",
@@ -33,6 +33,6 @@
         "clientPort": 3014,
         "privKeyPath": "../Keys/node4.priv",
         "pubKeyPath": "../Keys/node4.pub",
-        "persona": "WRONG_VALUE"
+        "persona": "REGULAR"
     }
 ]
