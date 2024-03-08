@@ -456,6 +456,26 @@ public class NodeService implements UDPService {
             return;
         }
 
+        // If this process already decided on a value for this instance, so this process has received a Quorum of CommitMessages
+        if (instance.getCommittedRound() != -1) {
+            LOGGER.log(Level.INFO,
+                    MessageFormat.format(
+                            "{0} - Already decided on Consensus Instance {1}, Round {2}, sending commit messages to sender",
+                            config.getId(), consensusInstance, round));
+            commitMessages.getMessages(consensusInstance, round).values().forEach(commitMessage -> {
+                ConsensusMessage m = new ConsensusMessageBuilder(config.getId(), Message.Type.COMMIT)
+                        .setConsensusInstance(consensusInstance)
+                        .setRound(round)
+                        .setReplyTo(message.getSenderId())
+                        .setReplyToMessageId(commitMessage.getMessageId())
+                        .setMessage(instance.getCommitMessage().toJson())
+                        .build();
+                nodeLink.sendPort(message.getSenderId(), m);
+            });
+            
+            return;
+        }
+
         // Within an instance of the algorithm, each upon rule is triggered at most once
         // for any round r
         if (instance.getCurrentRound() >= round) {
