@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.hdsledger.communication.personas;
 
 import java.net.InetAddress;
 
+import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
@@ -19,19 +20,17 @@ public class WrongValueLinkWrapper extends LinkWrapper {
         super(self, port, nodes, messageClass, activateLogs, baseSleepTime);
     }
 
-    public SlowLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass,
-        boolean activateLogs, int baseSleepTime, String wrong_message) {
+    public WrongValueLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass, 
+            boolean activateLogs, int baseSleepTime, String wrong_message) {
+        
         super(self, port, nodes, messageClass, activateLogs, baseSleepTime);
         this.wrong_message = wrong_message;
     }
 
     public void unreliableSend(InetAddress hostname, int port, Message data) {
-        try {
-            this.getLink().unreliableSend(hostname, port, (ConsensusMessage)(data)
-                .setMessage(this.wrong_message));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        ConsensusMessage message = (ConsensusMessage) data;
+        message.setMessage(this.wrong_message);
+        this.getLink().unreliableSend(hostname, port, message);
     }
 
 }

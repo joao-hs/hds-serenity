@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.hdsledger.communication.personas;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
@@ -18,10 +19,16 @@ public class IgnoreMessagesLinkWrapper extends LinkWrapper {
     }
 
     public void unreliableSend(InetAddress hostname, int port, Message data) {
-        try {
-            return;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        return;
+    }
+
+    public Message receive() throws IOException, ClassNotFoundException {
+        while (true) {
+            try {
+                Thread.sleep(10000); // Trapped in an infinite loop
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
