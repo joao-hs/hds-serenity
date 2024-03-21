@@ -63,6 +63,7 @@ public class Node {
 
             // Start ledger
             LedgerService ledger = LedgerService.getInstance();
+            ledger.setConfig(nodeConfig);
             ledger.addAllAccounts(clientConfigs);
             ledger.setClientService(clientService);
             ledger.setNodeService(nodeService);

@@ -77,7 +77,7 @@ public class Client {
         System.out.println("    transfer <destination:clientID:string> <amount:int> <fee:int> - transfer funds from your account to another");
         System.out.println("    balance <target:clientID:string> - check balance of target account");
         System.out.println("    menu - to print menu again");
-        System.out.println("    quit - to exit the programm");
+        System.out.println("    quit - to exit the program");
         System.out.println("(Commands are case-sensitive and can be abbreviated to the first letter)");
         System.out.println("");
         System.out.println("---------------------------------------------");

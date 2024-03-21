@@ -23,4 +23,15 @@ public abstract class ClientResponse {
     public void setStatus(Status status) {
         this.status = status;
     }
+
+    // methods to be implemented by subclasses
+    @Override
+    public int hashCode() {
+        throw new UnsupportedOperationException();
+    };
+
+    @Override
+    public boolean equals(Object obj) {
+        throw new UnsupportedOperationException();
+    };
 }

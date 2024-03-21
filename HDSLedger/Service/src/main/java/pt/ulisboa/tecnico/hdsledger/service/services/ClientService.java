@@ -75,7 +75,7 @@ public class ClientService implements UDPService {
         }
 
         TransferResponse response = ledger.transfer(request);
-        link.sendClientPort(issuer, new BlockchainResponseBuilder(config.getId(), Message.Type.TRANSFER_RESPONSE)
+        link.sendPort(issuer, new BlockchainResponseBuilder(config.getId(), Message.Type.TRANSFER_RESPONSE)
             .setSerializedResponse(response.toJson())
             .build()
         );
@@ -86,7 +86,7 @@ public class ClientService implements UDPService {
             config.getId(), issuer));
         
         BalanceResponse response = ledger.balance(request);
-        link.sendClientPort(issuer, new BlockchainResponseBuilder(config.getId(), Message.Type.BALANCE_RESPONSE)
+        link.sendPort(issuer, new BlockchainResponseBuilder(config.getId(), Message.Type.BALANCE_RESPONSE)
             .setSerializedResponse(response.toJson())
             .build()
         );
