@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Block {
+    // TODO: change to ordered set
     private Set<Transaction> transactions = new HashSet<>();
 
     private Block previousBlock;
