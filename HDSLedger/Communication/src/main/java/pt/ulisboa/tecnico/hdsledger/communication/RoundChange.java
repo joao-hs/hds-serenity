@@ -2,6 +2,8 @@ package pt.ulisboa.tecnico.hdsledger.communication;
 
 import com.google.gson.Gson;
 
+import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+
 public class RoundChange {
     
     // Consensus instance
@@ -11,18 +13,18 @@ public class RoundChange {
     // Round that has been prepared
     private Integer lastPreparedRound = null;
     // Value that has been prepared
-    private String lastPreparedValue = null;
+    private Block lastPreparedBlock = null;
 
     public RoundChange(Integer consensusInstance, Integer round) {
         this.consensusInstance = consensusInstance;
         this.round = round;
     }
 
-    public RoundChange(Integer consensusInstance, Integer round, Integer lastPreparedRound, String lastPreparedValue) {
+    public RoundChange(Integer consensusInstance, Integer round, Integer lastPreparedRound, Block lastPreparedBlock) {
         this.consensusInstance = consensusInstance;
         this.round = round;
         this.lastPreparedRound = lastPreparedRound;
-        this.lastPreparedValue = lastPreparedValue;
+        this.lastPreparedBlock = lastPreparedBlock;
     }
 
     public Integer getConsensusInstance() {
@@ -37,16 +39,16 @@ public class RoundChange {
         return this.lastPreparedRound;
     }
 
-    public String getLastPreparedValue(){
-        return this.lastPreparedValue;
+    public Block getLastPreparedBlock(){
+        return this.lastPreparedBlock;
     }
 
     public void setLastPreparedRound(Integer lastPreparedRound){
         this.lastPreparedRound = lastPreparedRound;
     }
         
-    public void setLastPreparedValue(String lastPreparedValue){
-        this.lastPreparedValue = lastPreparedValue;
+    public void setLastPreparedValue(Block lastPreparedBlock){
+        this.lastPreparedBlock = lastPreparedBlock;
     }
 
     public String toJson() {

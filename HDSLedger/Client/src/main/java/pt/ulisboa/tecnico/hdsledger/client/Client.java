@@ -48,9 +48,15 @@ public class Client {
                 clientMenu(clientId);
                 continue;
             }
-            else if (command_info.length == 2 && (command_info[0].equals("append") || command_info[0].equals("a"))){
-                blockchain.append(command_info[1]);
-                continue;
+            else if (command_info.length == 4 && (command_info[0].equals("transfer") || command_info[0].equals("t"))) {
+                String receiver = command_info[1];
+                int amount = Integer.parseInt(command_info[2]);
+                int fee = Integer.parseInt(command_info[3]);
+                blockchain.transfer(receiver, amount, fee);
+            }
+            else if (command_info.length == 2 && (command_info[0].equals("balance") || command_info[0].equals("b"))) {
+                String target = command_info[1];
+                blockchain.balance(target);
             }
             else {
                 System.out.println(" [~] Invalid Command. Try Again");
@@ -68,9 +74,11 @@ public class Client {
         System.out.println("---------------------------------------------");
         System.out.println("");
         System.out.println(" Input one of the following commands: ");
-        System.out.println("    < append | a, string > to append a string");
-        System.out.println("    < menu | m > to print menu again");
-        System.out.println("    < quit | q > to exit the programm");
+        System.out.println("    transfer <destination:clientID:string> <amount:int> <fee:int> - transfer funds from your account to another");
+        System.out.println("    balance <target:clientID:string> - check balance of target account");
+        System.out.println("    menu - to print menu again");
+        System.out.println("    quit - to exit the programm");
+        System.out.println("(Commands are case-sensitive and can be abbreviated to the first letter)");
         System.out.println("");
         System.out.println("---------------------------------------------");
         System.out.println("");

@@ -24,6 +24,14 @@ public class ProcessConfig {
 
     private String privKeyPath;
 
+    private int minFee;
+
+    private int maxFee;
+
+    private int feeThreshold;
+
+    private float minAmountFeeRatio;
+
     private Persona persona;
 
     public int getPort() {
@@ -48,6 +56,22 @@ public class ProcessConfig {
 
     public String getPrivKeyPath() {
         return privKeyPath;
+    }
+
+    public int getMinFee() {
+        return minFee;
+    }
+
+    public int getMaxFee() {
+        return maxFee;
+    }
+
+    public int getFeeThreshold() {
+        return feeThreshold;
+    }
+
+    public float getMinAmountFeeRatio() {
+        return minAmountFeeRatio;
     }
 
     public Persona getPersona() {

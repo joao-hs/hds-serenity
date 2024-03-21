@@ -2,17 +2,19 @@ package pt.ulisboa.tecnico.hdsledger.communication;
 
 import com.google.gson.Gson;
 
+import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+
 public class PrepareMessage {
     
     // Value
-    private String value;
+    private Block block;
 
-    public PrepareMessage(String value) {
-        this.value = value;
+    public PrepareMessage(Block block) {
+        this.block = block;
     }
 
-    public String getValue() {
-        return value;
+    public Block getBlock() {
+        return block;
     }
 
     public String toJson() {

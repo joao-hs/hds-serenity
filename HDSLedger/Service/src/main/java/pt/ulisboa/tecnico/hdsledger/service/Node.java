@@ -4,7 +4,9 @@ import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.LinkWrapperBuilder;
-import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
+import pt.ulisboa.tecnico.hdsledger.service.services.BlockBuilderService;
+import pt.ulisboa.tecnico.hdsledger.service.services.ClientService;
+import pt.ulisboa.tecnico.hdsledger.service.services.LedgerService;
 import pt.ulisboa.tecnico.hdsledger.service.services.NodeService;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
@@ -49,13 +51,23 @@ public class Node {
             LinkWrapper linkToNodes = new LinkWrapperBuilder(nodeConfig, nodeConfig.getPort(), nodeConfigs,
                 ConsensusMessage.class).build();
             
-            LinkWrapper linkToClients = new RegularLinkWrapper(nodeConfig, nodeConfig.getClientPort(), clientConfigs,
-                BlockchainRequest.class);
+            LinkWrapper linkToClients = new LinkWrapperBuilder(nodeConfig, nodeConfig.getClientPort(), clientConfigs,
+                BlockchainRequest.class).build();
 
             // Services that implement listen from UDPService
-            NodeService nodeService = new NodeService(linkToNodes, linkToClients, nodeConfig, nodeConfigs);
+            NodeService nodeService = new NodeService(linkToNodes, nodeConfig, nodeConfigs);
+            ClientService clientService = new ClientService(linkToClients, nodeConfig, clientConfigs);
 
-            nodeService.listen();
+            // Other services
+            BlockBuilderService blockBuilderService = new BlockBuilderService();
+
+            // Start ledger
+            LedgerService ledger = LedgerService.getInstance();
+            ledger.addAllAccounts(clientConfigs);
+            ledger.setClientService(clientService);
+            ledger.setNodeService(nodeService);
+            ledger.setBlockBuilderService(blockBuilderService);
+            ledger.init();
 
         } catch (Exception e) {
             e.printStackTrace();
