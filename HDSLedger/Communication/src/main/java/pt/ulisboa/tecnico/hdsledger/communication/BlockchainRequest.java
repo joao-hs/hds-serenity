@@ -1,18 +1,28 @@
 package pt.ulisboa.tecnico.hdsledger.communication;
 
+import com.google.gson.Gson;
+
 public class BlockchainRequest extends Message {
-    //TODO: Add authentication to the message
-    //TODO: Add freshness to the message
 
-    private String message;
+    private String serializedRequest;
 
-    public BlockchainRequest(String senderId, Type type, String message) {
+    public BlockchainRequest(String senderId, Type type) {
         super(senderId, type);
-        this.message = message;
     }
 
-    public String getMessage() {
-        return message;
+    public BalanceRequest deserializeBalanceRequest() {
+        return new Gson().fromJson(this.serializedRequest, BalanceRequest.class);
     }
-    
+
+    public TransferRequest deserializeTransferRequest() {
+        return new Gson().fromJson(this.serializedRequest, TransferRequest.class);
+    }
+
+    public String getSerializedRequest() {
+        return serializedRequest;
+    }
+
+    public void setSerializedRequest(String message) {
+        this.serializedRequest = message;
+    }
 }

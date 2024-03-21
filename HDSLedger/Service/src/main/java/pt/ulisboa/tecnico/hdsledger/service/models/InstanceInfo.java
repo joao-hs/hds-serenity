@@ -1,27 +1,27 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
 
-import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
+import pt.ulisboa.tecnico.hdsledger.utilities.Block;
 
 public class InstanceInfo {
 
     private int currentRound = 1;
     private int preparedRound = -1;
-    private String preparedValue;
+    private Block preparedBlock;
     private CommitMessage commitMessage;
-    private String inputValue;
+    private Block block;
     private int committedRound = -1;
 
-    public InstanceInfo(String inputValue) {
-        this.inputValue = inputValue;
+    public InstanceInfo(Block block) {
+        this.block = block;
     }
 
-    public InstanceInfo(int currentRound, String inputValue) {
+    public InstanceInfo(int currentRound, Block block) {
         this.currentRound = currentRound;
-        this.inputValue = inputValue;
+        this.block = block;
     }
 
     public int getCurrentRound() {
@@ -44,20 +44,20 @@ public class InstanceInfo {
         this.preparedRound = preparedRound;
     }
 
-    public String getPreparedValue() {
-        return preparedValue;
+    public Block getPreparedBlock() {
+        return preparedBlock;
     }
 
-    public void setPreparedValue(String preparedValue) {
-        this.preparedValue = preparedValue;
+    public void setPreparedValue(Block preparedBlock) {
+        this.preparedBlock = preparedBlock;
     }
 
-    public String getInputValue() {
-        return inputValue;
+    public Block getBlock() {
+        return block;
     }
 
-    public void setInputValue(String inputValue) {
-        this.inputValue = inputValue;
+    public void setBlock(Block block) {
+        this.block = block;
     }
 
     public int getCommittedRound() {
