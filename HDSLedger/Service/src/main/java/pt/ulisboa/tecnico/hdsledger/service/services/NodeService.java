@@ -500,6 +500,13 @@ public class NodeService implements UDPService, INodeService {
             instance.setPreparedRound(highestPrepared.orElse(Pair.of((Integer) null, instance.getBlock())).getLeft());
             instance.setPreparedValue(value);
 
+            link.broadcastPort(
+                new ConsensusMessageBuilder(config.getId(), Message.Type.PRE_PREPARE)
+                    .setConsensusInstance(consensusInstance)
+                    .setRound(round)
+                    .setMessage(new PrePrepareMessage(value).toJson())
+                    .build());
+
             return;
         }
 
