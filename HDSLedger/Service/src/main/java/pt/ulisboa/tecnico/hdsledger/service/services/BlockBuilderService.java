@@ -1,14 +1,22 @@
 package pt.ulisboa.tecnico.hdsledger.service.services;
 
+import java.text.MessageFormat;
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.logging.Level;
 
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.IBlockBuilderService;
 import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
+import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 import pt.ulisboa.tecnico.hdsledger.utilities.Transaction;
 
 public class BlockBuilderService implements IBlockBuilderService {
 
+    private static final CustomLogger LOGGER = new CustomLogger(BlockBuilderService.class.getName());
+
+    private ProcessConfig config;
+    
     private int initialCapacity = 10;
     private int minFee;
     private int maxFee;
@@ -24,23 +32,26 @@ public class BlockBuilderService implements IBlockBuilderService {
     });
 
 
-    public BlockBuilderService() {
-        this.minFee = 0;
-        this.maxFee = Integer.MAX_VALUE;
-        this.feeThreshold = 0;
-        this.minAmountFeeRatio = 0;
+    public BlockBuilderService(ProcessConfig config) {
+        this.config = config;
+        this.minFee = config.getMinFee();
+        this.maxFee = config.getMaxFee();
+        this.feeThreshold = config.getFeeThreshold();
+        this.minAmountFeeRatio = config.getMinFeeAmountRatio();
     }
     
     @Override
     public Block buildBlock() {
         synchronized (transactionPool) {
             if (availableFee < feeThreshold) {
+                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Not enough fee to build a block", config.getId()));
                 return null;
             }
             Block block = new Block();
-            while (availableFee >= feeThreshold) {
+            while (availableFee > feeThreshold) {
                 Transaction transaction = transactionPool.poll();
                 availableFee -= transaction.getFee();
+                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Adding transaction to block: {1}", config.getId(), transaction));
                 block.addTransaction(transaction);
             }
             return block;
@@ -78,7 +89,7 @@ public class BlockBuilderService implements IBlockBuilderService {
     public boolean isTransactionValid(Transaction transaction) {
         return transaction.getFee() >= minFee 
             && transaction.getFee() <= maxFee 
-            && transaction.getAmount() * minAmountFeeRatio >= transaction.getFee();
+            && transaction.getFee() / transaction.getAmount() >= minAmountFeeRatio;
     }
     
 }

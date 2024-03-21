@@ -165,6 +165,7 @@ public class LedgerService implements ILedgerService {
         for (Transaction transaction : block.getTransactions()) {
             try {
                 if (validateTransaction(transaction))
+                    // TODO remove same transaction from transaction pool
                     performTransfer(transaction.getSender(), transaction.getReceiver(), transaction.getAmount(), transaction.getTimestamp());
             } catch (AccountNotFoundException e) {
                 LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), transaction.getSender()));
@@ -172,7 +173,7 @@ public class LedgerService implements ILedgerService {
                 LOGGER.log(Level.INFO, MessageFormat.format("{0} - Insufficient funds in account {1}", config.getId(), transaction.getSender()));
             }
         }
-
+        // TODO: actually chain together nodes
         blockchain.add(block);
     }
 }

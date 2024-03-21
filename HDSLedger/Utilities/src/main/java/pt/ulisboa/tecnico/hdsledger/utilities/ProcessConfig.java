@@ -24,13 +24,13 @@ public class ProcessConfig {
 
     private String privKeyPath;
 
-    private int minFee;
+    private int minFee = 0; // minimum fee per transaction
 
-    private int maxFee;
+    private int maxFee = Integer.MAX_VALUE; // maximum fee per transaction
 
-    private int feeThreshold;
+    private int feeThreshold = 0; // fee threshold to build a block
 
-    private float minAmountFeeRatio;
+    private float minFeeAmountRatio = 0; // minimum fee amount ratio, (e.g., if 0.1, fee needs to be 10% or more of the amount)
 
     private Persona persona;
 
@@ -70,8 +70,8 @@ public class ProcessConfig {
         return feeThreshold;
     }
 
-    public float getMinAmountFeeRatio() {
-        return minAmountFeeRatio;
+    public float getMinFeeAmountRatio() {
+        return minFeeAmountRatio;
     }
 
     public Persona getPersona() {

@@ -59,7 +59,7 @@ public class Node {
             ClientService clientService = new ClientService(linkToClients, nodeConfig, clientConfigs);
 
             // Other services
-            BlockBuilderService blockBuilderService = new BlockBuilderService();
+            BlockBuilderService blockBuilderService = new BlockBuilderService(nodeConfig);
 
             // Start ledger
             LedgerService ledger = LedgerService.getInstance();
