@@ -148,7 +148,7 @@ public class LedgerService implements ILedgerService {
     }
 
     @Override
-    public synchronized boolean insertBlock(Block block) {
+    public synchronized void uponConsensusReached(Block block) {
         // TODO: Validate block (ledger-logic)
         // if not valid, return false
 
@@ -163,6 +163,6 @@ public class LedgerService implements ILedgerService {
             }
         }
 
-        return blockchain.add(block);
+        blockchain.add(block);
     }
 }

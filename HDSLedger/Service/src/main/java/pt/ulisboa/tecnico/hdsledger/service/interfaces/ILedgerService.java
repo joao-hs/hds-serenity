@@ -7,23 +7,25 @@ import pt.ulisboa.tecnico.hdsledger.communication.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.utilities.Block;
 
 public interface ILedgerService {
-    /*
+    /**
      * Transfer money from one account to another
      * Blocks until the transfer is completed
      * @return the response of the transfer
      */
     public TransferResponse transfer(TransferRequest request);
 
-    /*
+    /**
      * Get the balance of an account
      * Blocks until the balance is received
      * @return the response of the balance request
      */
     public BalanceResponse balance(BalanceRequest request);
 
-    /*
-     * Insert block to the blockchain
-     * @return true if the block was inserted, false otherwise
+    /**
+     * This method is called when consensus is reached for a specific block.
+     * It is responsible for handling the block after consensus is reached.
+     *
+     * @param block The block for which consensus has been reached.
      */
-    public boolean insertBlock(Block block);
+    public void uponConsensusReached(Block block);
 }

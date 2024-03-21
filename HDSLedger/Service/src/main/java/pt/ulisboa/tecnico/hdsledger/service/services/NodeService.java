@@ -414,7 +414,7 @@ public class NodeService implements UDPService, INodeService {
                 }
             }
             // Append value to the ledger (must be synchronized to be thread-safe)
-            ledger.insertBlock(block);
+            ledger.uponConsensusReached(block);
             
             lastDecidedConsensusInstance.getAndIncrement();
             lastDecidedConsensusInstance.notifyAll();
