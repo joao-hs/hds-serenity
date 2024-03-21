@@ -30,4 +30,18 @@ public class BalanceResponse extends ClientResponse {
     public String toJson() {
         return new Gson().toJson(this);
     }
+
+    @Override
+    public int hashCode() {
+        return getStatus().hashCode() + target.hashCode() + balance;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof BalanceResponse) {
+            BalanceResponse other = (BalanceResponse) obj;
+            return getStatus().equals(other.getStatus()) && target.equals(other.target) && balance == other.balance;
+        }
+        return false;
+    }
 }

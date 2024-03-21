@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.hdsledger.service.services;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 
 import pt.ulisboa.tecnico.hdsledger.communication.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.BalanceResponse;
@@ -12,17 +13,21 @@ import pt.ulisboa.tecnico.hdsledger.service.interfaces.ILedgerService;
 import pt.ulisboa.tecnico.hdsledger.service.models.Account;
 import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;
 import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 import pt.ulisboa.tecnico.hdsledger.utilities.Transaction;
 
 public class LedgerService implements ILedgerService {
+    private static final CustomLogger LOGGER = new CustomLogger(LedgerService.class.getName());
+
     private static LedgerService instance = null;
 
     private ConcurrentHashMap<String, Account> accounts = new ConcurrentHashMap<>();
 
     private ArrayList<Block> blockchain = new ArrayList<>();
 
+    private ProcessConfig config = null;
     private ClientService clientService = null;
     private NodeService nodeService = null;
     private BlockBuilderService blockBuilderService = null;
@@ -35,6 +40,10 @@ public class LedgerService implements ILedgerService {
             instance = new LedgerService();
         }
         return instance;
+    }
+
+    public void setConfig(ProcessConfig config) {
+        this.config = config;
     }
 
     public void setClientService(ClientService clientService) {
@@ -68,7 +77,7 @@ public class LedgerService implements ILedgerService {
     }
 
     public int getBalance(String id) throws AccountNotFoundException {
-        if (!accounts.contains(id)) {
+        if (!accounts.containsKey(id)) {
             throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", id));
         }
         Account account = accounts.get(id);
@@ -139,8 +148,9 @@ public class LedgerService implements ILedgerService {
         BalanceResponse response = new BalanceResponse(request.getTarget());
         try {
             response.setBalance(getBalance(request.getTarget()));
+            response.setStatus(BalanceResponse.Status.OK);
         } catch (AccountNotFoundException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), request.getTarget()));
             response.setStatus(BalanceResponse.Status.ACCOUNT_NOT_FOUND);
         }
         return response;
@@ -157,9 +167,9 @@ public class LedgerService implements ILedgerService {
                 if (validateTransaction(transaction))
                     performTransfer(transaction.getSender(), transaction.getReceiver(), transaction.getAmount(), transaction.getTimestamp());
             } catch (AccountNotFoundException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), transaction.getSender()));
             } catch (InsufficientFundsException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Insufficient funds in account {1}", config.getId(), transaction.getSender()));
             }
         }
 
