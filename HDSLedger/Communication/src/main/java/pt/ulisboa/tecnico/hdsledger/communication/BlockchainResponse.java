@@ -2,6 +2,9 @@ package pt.ulisboa.tecnico.hdsledger.communication;
 
 import com.google.gson.Gson;
 
+import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
+
 public class BlockchainResponse extends Message {
 
     private String serializedResponse;

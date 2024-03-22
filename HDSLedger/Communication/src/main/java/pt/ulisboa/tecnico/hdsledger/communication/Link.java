@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.hdsledger.communication;
 import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.communication.Message.Type;
+import pt.ulisboa.tecnico.hdsledger.communication.interfaces.LinkInterface;
 import pt.ulisboa.tecnico.hdsledger.utilities.*;
 
 import java.io.IOException;
@@ -74,19 +75,19 @@ public class Link implements LinkInterface {
         receivedAcks.addAll(messageIds);
     }
 
-    /*
+    /**
      * Broadcasts a message to all nodes in the network
      *
      * @param data The message to be broadcasted
      */
     public void broadcastPort(Message data) {
         Gson gson = new Gson();
-        nodes.forEach((destId, dest) -> this.linkWrapper.sendPort(destId, gson.fromJson(gson.toJson(data), data.getClass())));
+        nodes.forEach((destId, dest) -> this.linkWrapper.sendPort(destId, gson.fromJson(data.toJson(), data.getClass())));
     }
 
     public void broadcastClientPort(Message data) {
         Gson gson = new Gson();
-        nodes.forEach((destId, dest) -> this.linkWrapper.sendClientPort(destId, gson.fromJson(gson.toJson(data), data.getClass())));
+        nodes.forEach((destId, dest) -> this.linkWrapper.sendClientPort(destId, gson.fromJson(data.toJson(), data.getClass())));
     }
 
     public void sendPort(String nodeId, Message data) {
@@ -105,14 +106,18 @@ public class Link implements LinkInterface {
         this.linkWrapper.send(nodeId, node.getClientPort(), data);
     }
 
-    /*
+    public void send(String nodeId, int destPort, Message data) {
+        this.linkWrapper.send(nodeId, destPort, data, true);
+    }
+
+    /**
      * Sends a message to a specific node with guarantee of delivery
      *
      * @param nodeId The node identifier
      *
      * @param data The message to be sent
      */
-    public void send(String nodeId, int destPort, Message data) {
+    public void send(String nodeId, int destPort, Message data, boolean sign) {
 
         // Spawn a new thread to send the message
         // To avoid blocking while waiting for ACK
@@ -146,7 +151,7 @@ public class Link implements LinkInterface {
                             "{0} - Sending {1} message to {2}:{3} with message ID {4} - Attempt #{5}", config.getId(),
                             data.getType(), destAddress, destPort, messageId, count++));
 
-                    this.linkWrapper.unreliableSend(destAddress, destPort, data);
+                    this.linkWrapper.unreliableSend(destAddress, destPort, data, sign);
 
                     // Wait (using exponential back-off), then look for ACK
                     Thread.sleep(sleepTime);
@@ -166,7 +171,7 @@ public class Link implements LinkInterface {
         }).start();
     }
 
-    /*
+    /**
      * Sends a message to a specific node without guarantee of delivery
      * Mainly used to send ACKs, if they are lost, the original message will be
      * resent
@@ -177,22 +182,24 @@ public class Link implements LinkInterface {
      *
      * @param data The message to be sent
      */
-    public void unreliableSend(InetAddress hostname, int port, Message data) {
+    public void unreliableSend(InetAddress hostname, int port, Message data, boolean sign) {
         new Thread(() -> {
             try {
-                // Signing the message
-                String jsonData = new Gson().toJson(data);
-                String signature;
-
-                try {
-                    signature = RSAEncryption.sign(jsonData, config.getPrivKeyPath());
-                } catch (Exception e) {
-                    throw new HDSSException(ErrorMessage.SigningMessageError);
+                if (sign) {
+                    // Signing the message
+                    String jsonData = data.toSignable();
+                    String signature;
+    
+                    try {
+                        signature = RSAEncryption.sign(jsonData, config.getPrivKeyPath());
+                    } catch (Exception e) {
+                        throw new HDSSException(ErrorMessage.SigningMessageError);
+                    }
+    
+                    data.setSignature(signature);
                 }
 
-                SignedMessage message = new SignedMessage(jsonData, signature);
-
-                byte[] buf = new Gson().toJson(message).getBytes();
+                byte[] buf = data.toJson().getBytes();
 
                 DatagramPacket packet = new DatagramPacket(buf, buf.length, hostname, port);
 
@@ -212,7 +219,6 @@ public class Link implements LinkInterface {
 
         Message message = null;
         String serialized = "";
-        SignedMessage responseSignData = null;
         Boolean local = false;
         DatagramPacket response = null;
         
@@ -229,11 +235,10 @@ public class Link implements LinkInterface {
 
             byte[] buffer = Arrays.copyOfRange(response.getData(), 0, response.getLength());
             serialized = new String(buffer);
-            responseSignData = new Gson().fromJson(serialized, SignedMessage.class);
-            message = new Gson().fromJson(responseSignData.getMessage(), Message.class);
+            message = new Gson().fromJson(serialized, Message.class);
 
-            if (!RSAEncryption.verifySignature(responseSignData.getMessage(),
-                responseSignData.getSignature(),
+            if (!RSAEncryption.verifySignature(message.toSignable(),
+                message.getSignature(),
                 nodes.get(message.getSenderId()).getPubKeyPath())) {
 
                 message.setType(Message.Type.IGNORE);
@@ -261,7 +266,7 @@ public class Link implements LinkInterface {
 
         // It's not an ACK -> Deserialize for the correct type
         if (!local)
-            message = new Gson().fromJson(responseSignData.getMessage(), this.messageClass);
+            message = new Gson().fromJson(message.toJson(), this.messageClass);
 
         boolean isRepeated = !receivedMessages.get(message.getSenderId()).add(messageId);
         Type originalType = message.getType();
@@ -304,7 +309,7 @@ public class Link implements LinkInterface {
             // we're assuming an eventually synchronous network
             // Even if a node receives the message multiple times,
             // it will discard duplicates
-            this.linkWrapper.unreliableSend(address, port, responseMessage);
+            this.linkWrapper.unreliableSend(address, port, responseMessage, true);
         }
         
         return message;

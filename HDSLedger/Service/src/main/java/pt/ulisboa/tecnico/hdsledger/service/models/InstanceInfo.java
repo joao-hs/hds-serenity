@@ -3,7 +3,7 @@ package pt.ulisboa.tecnico.hdsledger.service.models;
 
 import com.google.gson.GsonBuilder;
 
-import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.utilities.Block;
 
 public class InstanceInfo {

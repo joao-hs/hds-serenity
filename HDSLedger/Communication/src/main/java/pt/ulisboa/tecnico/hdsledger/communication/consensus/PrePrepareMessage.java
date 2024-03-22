@@ -1,19 +1,19 @@
-package pt.ulisboa.tecnico.hdsledger.communication;
+package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
 import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.utilities.Block;
 
-public class PrepareMessage {
+public class PrePrepareMessage {
     
     // Value
     private Block block;
 
-    public PrepareMessage(Block block) {
+    public PrePrepareMessage(Block block) {
         this.block = block;
     }
 
-    public Block getBlock() {
+    public Block getValue() {
         return block;
     }
 

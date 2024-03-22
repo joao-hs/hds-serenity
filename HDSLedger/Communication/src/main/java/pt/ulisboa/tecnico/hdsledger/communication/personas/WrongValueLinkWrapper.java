@@ -30,7 +30,7 @@ public class WrongValueLinkWrapper extends LinkWrapper {
     public void unreliableSend(InetAddress hostname, int port, Message data) {
         ConsensusMessage message = (ConsensusMessage) data;
         message.setMessage(this.wrong_message);
-        this.getLink().unreliableSend(hostname, port, message);
+        this.getLink().unreliableSend(hostname, port, message, true);
     }
 
 }

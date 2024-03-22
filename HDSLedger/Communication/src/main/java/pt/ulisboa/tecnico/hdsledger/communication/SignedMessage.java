@@ -4,22 +4,11 @@ import java.io.Serializable;
 
 public class SignedMessage implements Serializable {
 
-    // Message's content
-    private String message;
     // Message's signature
     private String signature;
 
-    public SignedMessage(String message, String signature) {
-        this.message = message;
-        this.signature = signature;
-    }
+    public SignedMessage() {
 
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
     }
 
     public String getSignature() {

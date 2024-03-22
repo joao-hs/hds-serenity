@@ -1,15 +1,15 @@
-package pt.ulisboa.tecnico.hdsledger.communication;
+package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
 import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.utilities.Block;
 
-public class CommitMessage {
-
+public class PrepareMessage {
+    
     // Value
     private Block block;
 
-    public CommitMessage(Block block) {
+    public PrepareMessage(Block block) {
         this.block = block;
     }
 
@@ -20,4 +20,4 @@ public class CommitMessage {
     public String toJson() {
         return new Gson().toJson(this);
     }
-}
+}   

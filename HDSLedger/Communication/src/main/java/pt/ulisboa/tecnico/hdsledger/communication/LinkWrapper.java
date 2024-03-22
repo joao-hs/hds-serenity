@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
 
+import pt.ulisboa.tecnico.hdsledger.communication.interfaces.LinkInterface;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
 public abstract class LinkWrapper implements LinkInterface {
@@ -48,8 +49,12 @@ public abstract class LinkWrapper implements LinkInterface {
         this.link.send(nodeId, destPort, data);
     }
 
-    public void unreliableSend(InetAddress hostname, int port, Message data) {
-        this.link.unreliableSend(hostname, port, data);
+    public void send(String nodeId, int destPort, Message data, boolean sign) {
+        this.link.send(nodeId, destPort, data, sign);
+    }
+
+    public void unreliableSend(InetAddress hostname, int port, Message data, boolean sign) {
+        this.link.unreliableSend(hostname, port, data, sign);
     }
 
     public Message receive() throws IOException, ClassNotFoundException {

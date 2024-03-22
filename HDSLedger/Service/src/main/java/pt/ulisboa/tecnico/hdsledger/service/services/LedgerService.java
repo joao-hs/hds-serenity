@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
-import pt.ulisboa.tecnico.hdsledger.communication.BalanceRequest;
-import pt.ulisboa.tecnico.hdsledger.communication.BalanceResponse;
-import pt.ulisboa.tecnico.hdsledger.communication.TransferRequest;
-import pt.ulisboa.tecnico.hdsledger.communication.TransferResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
+import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
+import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.ILedgerService;
 import pt.ulisboa.tecnico.hdsledger.service.models.Account;
 import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;

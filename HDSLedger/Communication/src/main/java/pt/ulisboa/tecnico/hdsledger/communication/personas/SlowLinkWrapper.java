@@ -27,7 +27,7 @@ public class SlowLinkWrapper extends LinkWrapper {
     public void unreliableSend(InetAddress hostname, int port, Message data) {
         try {
             Thread.sleep(this.slowDownTime);
-            this.getLink().unreliableSend(hostname, port, data);
+            this.getLink().unreliableSend(hostname, port, data, true);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
