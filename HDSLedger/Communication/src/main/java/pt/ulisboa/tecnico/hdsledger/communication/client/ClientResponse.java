@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.hdsledger.communication.client;
 
+import com.google.gson.Gson;
+
 public abstract class ClientResponse {
     public enum Status {
         // General
@@ -22,6 +24,10 @@ public abstract class ClientResponse {
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String toJson() {
+        return new Gson().toJson(this);
     }
 
     // methods to be implemented by subclasses

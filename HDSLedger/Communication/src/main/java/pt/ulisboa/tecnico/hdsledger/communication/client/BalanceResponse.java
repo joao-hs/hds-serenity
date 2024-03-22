@@ -1,7 +1,5 @@
 package pt.ulisboa.tecnico.hdsledger.communication.client;
 
-import com.google.gson.Gson;
-
 public class BalanceResponse extends ClientResponse {
 
     private String target;
@@ -25,10 +23,6 @@ public class BalanceResponse extends ClientResponse {
 
     public void setBalance(int balance) {
         this.balance = balance;
-    }
-
-    public String toJson() {
-        return new Gson().toJson(this);
     }
 
     @Override

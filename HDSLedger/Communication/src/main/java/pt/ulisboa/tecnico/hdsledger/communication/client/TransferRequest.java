@@ -2,7 +2,9 @@ package pt.ulisboa.tecnico.hdsledger.communication.client;
 
 import com.google.gson.Gson;
 
-public class TransferRequest {
+import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
+
+public class TransferRequest extends SharableMessage {
     private String sender;
     private String receiver;
     private int amount;
