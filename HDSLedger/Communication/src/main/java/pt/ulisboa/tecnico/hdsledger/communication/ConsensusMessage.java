@@ -23,7 +23,7 @@ public class ConsensusMessage extends Message {
     private String replyTo;
     // Id of the previous message
     private int replyToMessageId;
-    // Message (PREPREPARE, PREPARE, COMMIT)
+    // Message (PREPREPARE, PREPARE, COMMIT, ROUND_CHANGE)
     private String message;
 
     public ConsensusMessage(String senderId, Type type) {

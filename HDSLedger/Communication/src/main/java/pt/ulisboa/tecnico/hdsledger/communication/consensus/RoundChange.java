@@ -1,10 +1,9 @@
 package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
-import com.google.gson.Gson;
-
+import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
 import pt.ulisboa.tecnico.hdsledger.utilities.Block;
 
-public class RoundChange {
+public class RoundChange extends SharableMessage {
     
     // Consensus instance
     private Integer consensusInstance;
@@ -51,7 +50,4 @@ public class RoundChange {
         this.lastPreparedBlock = lastPreparedBlock;
     }
 
-    public String toJson() {
-        return new Gson().toJson(this);
-    }
 }

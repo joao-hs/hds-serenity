@@ -2,7 +2,9 @@ package pt.ulisboa.tecnico.hdsledger.communication.client;
 
 import com.google.gson.Gson;
 
-public class BalanceRequest {
+import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
+
+public class BalanceRequest extends SharableMessage {
 
     private String target;
 
