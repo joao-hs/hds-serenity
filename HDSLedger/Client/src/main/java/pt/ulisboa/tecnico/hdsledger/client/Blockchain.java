@@ -1,10 +1,7 @@
 package pt.ulisboa.tecnico.hdsledger.client;
 
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
-import pt.ulisboa.tecnico.hdsledger.communication.BalanceRequest;
-import pt.ulisboa.tecnico.hdsledger.communication.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.BlockchainResponse;
-import pt.ulisboa.tecnico.hdsledger.communication.ClientResponse;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -19,9 +16,12 @@ import java.util.TreeSet;
 import org.apache.commons.lang3.tuple.Pair;
 
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
-import pt.ulisboa.tecnico.hdsledger.communication.TransferRequest;
-import pt.ulisboa.tecnico.hdsledger.communication.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.BlockchainRequestBuilder;
+import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
+import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
+import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;

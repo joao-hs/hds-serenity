@@ -2,6 +2,17 @@ package pt.ulisboa.tecnico.hdsledger.communication;
 
 import com.google.gson.Gson;
 
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrePrepareMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrepareMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.RoundChange;
+
+/**
+ * Wrapper class for all consensus messages.
+ * 
+ * Relation: ConsensusMessage has a serialized 
+ * PrePrepareMessage, PrepareMessage, CommitMessage or RoundChange
+ */
 public class ConsensusMessage extends Message {
 
     // Consensus instance

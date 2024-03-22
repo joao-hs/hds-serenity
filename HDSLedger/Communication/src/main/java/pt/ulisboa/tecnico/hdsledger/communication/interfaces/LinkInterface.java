@@ -1,10 +1,12 @@
-package pt.ulisboa.tecnico.hdsledger.communication;
+package pt.ulisboa.tecnico.hdsledger.communication.interfaces;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
 
-interface LinkInterface {
+import pt.ulisboa.tecnico.hdsledger.communication.Message;
+
+public interface LinkInterface {
 
     public void ackAll(List<Integer> messageIds);
 
@@ -59,8 +61,10 @@ interface LinkInterface {
      * @param port The port of the destination node
      *
      * @param data The message to be sent
+     * 
+     * @param sign If the message should be signed
      */
-    public void unreliableSend(InetAddress hostname, int port, Message data);
+    public void unreliableSend(InetAddress hostname, int port, Message data, boolean sign);
 
     /**
      * Receives a message from any node in the network (blocking)

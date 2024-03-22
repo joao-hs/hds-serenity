@@ -15,13 +15,13 @@ import java.util.logging.Level;
 
 import org.apache.commons.lang3.tuple.Pair;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.ConsensusMessageBuilder;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrePrepareMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrepareMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.RoundChange;
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.PrePrepareMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.PrepareMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.CommitMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.RoundChange;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.INodeService;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.UDPService;
 import pt.ulisboa.tecnico.hdsledger.service.models.InstanceInfo;
