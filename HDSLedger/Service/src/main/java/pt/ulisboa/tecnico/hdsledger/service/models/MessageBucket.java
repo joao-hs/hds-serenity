@@ -15,8 +15,8 @@ import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrepareMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.RoundChange;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
 
 public class MessageBucket {
 
@@ -49,38 +49,38 @@ public class MessageBucket {
         bucket.get(consensusInstance).get(round).put(message.getSenderId(), message);
     }
 
-    public Optional<Block> hasValidPrepareQuorum(String nodeId, int instance, int round) {
+    public Optional<ConsensusValue> hasValidPrepareQuorum(String nodeId, int instance, int round) {
         // Create mapping of value to frequency
-        HashMap<Block, Integer> frequency = new HashMap<>();
+        HashMap<ConsensusValue, Integer> frequency = new HashMap<>();
         bucket.get(instance).get(round).values().forEach((message) -> {
             PrepareMessage prepareMessage = message.deserializePrepareMessage();
-            Block value = prepareMessage.getBlock();
+            ConsensusValue value = prepareMessage.getValue();
             frequency.put(value, frequency.getOrDefault(value, 0) + 1);
         });
 
         // Only one value (if any, thus the optional) will have a frequency
         // greater than or equal to the quorum size
-        return frequency.entrySet().stream().filter((Map.Entry<Block, Integer> entry) -> {
+        return frequency.entrySet().stream().filter((Map.Entry<ConsensusValue, Integer> entry) -> {
             return entry.getValue() >= quorumSize;
-        }).map((Map.Entry<Block, Integer> entry) -> {
+        }).map((Map.Entry<ConsensusValue, Integer> entry) -> {
             return entry.getKey();
         }).findFirst();
     }
 
-    public Optional<Block> hasValidCommitQuorum(String nodeId, int instance, int round) {
+    public Optional<ConsensusValue> hasValidCommitQuorum(String nodeId, int instance, int round) {
         // Create mapping of value to frequency
-        HashMap<Block, Integer> frequency = new HashMap<>();
+        HashMap<ConsensusValue, Integer> frequency = new HashMap<>();
         bucket.get(instance).get(round).values().forEach((message) -> {
             CommitMessage commitMessage = message.deserializeCommitMessage();
-            Block block = commitMessage.getBlock();
+            ConsensusValue block = commitMessage.getValue();
             frequency.put(block, frequency.getOrDefault(block, 0) + 1);
         });
 
         // Only one value (if any, thus the optional) will have a frequency
         // greater than or equal to the quorum size
-        return frequency.entrySet().stream().filter((Map.Entry<Block, Integer> entry) -> {
+        return frequency.entrySet().stream().filter((Map.Entry<ConsensusValue, Integer> entry) -> {
             return entry.getValue() >= quorumSize;
-        }).map((Map.Entry<Block, Integer> entry) -> {
+        }).map((Map.Entry<ConsensusValue, Integer> entry) -> {
             return entry.getKey();
         }).findFirst();
     }

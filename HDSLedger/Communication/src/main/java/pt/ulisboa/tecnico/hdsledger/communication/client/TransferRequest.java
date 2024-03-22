@@ -1,10 +1,6 @@
 package pt.ulisboa.tecnico.hdsledger.communication.client;
 
-import com.google.gson.Gson;
-
-import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
-
-public class TransferRequest extends SharableMessage {
+public class TransferRequest extends ClientRequest {
     private String sender;
     private String receiver;
     private int amount;
@@ -71,7 +67,4 @@ public class TransferRequest extends SharableMessage {
         this.nonce = nonce;
     }
 
-    public String toJson() {
-        return new Gson().toJson(this);
-    }
 }

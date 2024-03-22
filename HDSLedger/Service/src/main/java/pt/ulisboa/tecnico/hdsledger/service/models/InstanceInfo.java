@@ -4,24 +4,24 @@ package pt.ulisboa.tecnico.hdsledger.service.models;
 import com.google.gson.GsonBuilder;
 
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 
 public class InstanceInfo {
 
     private int currentRound = 1;
     private int preparedRound = -1;
-    private Block preparedBlock;
+    private ConsensusValue preparedValue;
     private CommitMessage commitMessage;
-    private Block block;
+    private ConsensusValue value;
     private int committedRound = -1;
 
-    public InstanceInfo(Block block) {
-        this.block = block;
+    public InstanceInfo(ConsensusValue value) {
+        this.value = value;
     }
 
-    public InstanceInfo(int currentRound, Block block) {
+    public InstanceInfo(int currentRound, ConsensusValue value) {
         this.currentRound = currentRound;
-        this.block = block;
+        this.value = value;
     }
 
     public int getCurrentRound() {
@@ -44,20 +44,20 @@ public class InstanceInfo {
         this.preparedRound = preparedRound;
     }
 
-    public Block getPreparedBlock() {
-        return preparedBlock;
+    public ConsensusValue getPreparedValue() {
+        return preparedValue;
     }
 
-    public void setPreparedValue(Block preparedBlock) {
-        this.preparedBlock = preparedBlock;
+    public void setPreparedValue(ConsensusValue preparedValue) {
+        this.preparedValue = preparedValue;
     }
 
-    public Block getBlock() {
-        return block;
+    public ConsensusValue getValue() {
+        return value;
     }
 
-    public void setBlock(Block block) {
-        this.block = block;
+    public void setValue(ConsensusValue value) {
+        this.value = value;
     }
 
     public int getCommittedRound() {

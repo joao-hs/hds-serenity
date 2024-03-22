@@ -1,10 +1,6 @@
 package pt.ulisboa.tecnico.hdsledger.communication.client;
 
-import com.google.gson.Gson;
-
-import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
-
-public class BalanceRequest extends SharableMessage {
+public class BalanceRequest extends ClientRequest {
 
     private String target;
 
@@ -14,9 +10,5 @@ public class BalanceRequest extends SharableMessage {
 
     public String getTarget() {
         return target;
-    }
-
-    public String toJson() {
-        return new Gson().toJson(this);
     }
 }

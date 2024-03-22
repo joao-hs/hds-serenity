@@ -1,13 +1,16 @@
-package pt.ulisboa.tecnico.hdsledger.utilities;
+package pt.ulisboa.tecnico.hdsledger.service.models;
 
 import java.security.NoSuchAlgorithmException;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Block {
+import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
+import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
+
+public class Block extends ConsensusValue {
     // TODO: change to ordered set
     private Set<Transaction> transactions = new HashSet<>();
 
@@ -21,10 +24,18 @@ public class Block {
     public Block(Enumeration<String> accounts) {
         // Genesis block
         accounts.asIterator().forEachRemaining(accountId -> {
-            transactions.add(
-                // ! Amount is hardcoded to 100, should match the initial balance in Account
-                new Transaction(null, accountId, 100, Instant.now().toString(), 0)
+            TransferRequest ownRequest = new TransferRequest(
+                null, // sender
+                accountId, // receiver
+                100, // ! initial amount
+                0, // fee
+                "2024-02-25 16:59:07", // random timestamp
+                0 // nonce
             );
+            ownRequest.setCreator(null);
+            ownRequest.setSignature(null);
+
+            transactions.add(new Transaction(ownRequest));
         });
 
         this.previousBlock = null;
@@ -53,7 +64,7 @@ public class Block {
             return;
         }
         try {
-            this.hash = RSAEncryption.digest(String.join(concatTransactions(), previousBlock.hash));
+            this.hash = RSAEncryption.digest(concatTransactions() + previousBlock.hash);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }

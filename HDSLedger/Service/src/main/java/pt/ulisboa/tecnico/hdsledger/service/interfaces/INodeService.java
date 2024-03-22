@@ -1,11 +1,11 @@
 package pt.ulisboa.tecnico.hdsledger.service.interfaces;
 
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 
 public interface INodeService {
 
     /*
-     * Trigger the consensus algorithm to reach consensus on the block
+     * Trigger the consensus algorithm to reach consensus on a value
      */
-    public void reachConsensus(Block block);
+    public void reachConsensus(ConsensusValue value);
 }

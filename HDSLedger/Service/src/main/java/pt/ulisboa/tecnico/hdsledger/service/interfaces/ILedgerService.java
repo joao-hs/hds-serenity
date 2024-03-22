@@ -4,7 +4,7 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 
 public interface ILedgerService {
     /**
@@ -22,10 +22,10 @@ public interface ILedgerService {
     public BalanceResponse balance(BalanceRequest request);
 
     /**
-     * This method is called when consensus is reached for a specific block.
-     * It is responsible for handling the block after consensus is reached.
+     * This method is called when consensus is reached for a specific value.
+     * It is responsible for handling the value after consensus is reached.
      *
-     * @param block The block for which consensus has been reached.
+     * @param value the value for which consensus was reached (needs to be a block)
      */
-    public void uponConsensusReached(Block block);
+    public void uponConsensusReached(ConsensusValue value);
 }

@@ -11,12 +11,13 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.ILedgerService;
 import pt.ulisboa.tecnico.hdsledger.service.models.Account;
+import pt.ulisboa.tecnico.hdsledger.service.models.Block;
+import pt.ulisboa.tecnico.hdsledger.service.models.Transaction;
 import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
-import pt.ulisboa.tecnico.hdsledger.utilities.Transaction;
 
 public class LedgerService implements ILedgerService {
     private static final CustomLogger LOGGER = new CustomLogger(LedgerService.class.getName());
@@ -90,7 +91,7 @@ public class LedgerService implements ILedgerService {
         return balance;
     }
 
-    public void performTransfer(String senderId, String receiverId, int amount, String timestamp) throws AccountNotFoundException, InsufficientFundsException {
+    public void performTransfer(String senderId, String receiverId, int amount) throws AccountNotFoundException, InsufficientFundsException {
         if (!accounts.contains(senderId)) {
             throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", senderId));
         }
@@ -116,12 +117,7 @@ public class LedgerService implements ILedgerService {
     public TransferResponse transfer(TransferRequest request) {
         // TODO: Validate request (Ledger-logic)
 
-        Transaction transaction = new Transaction(
-            request.getSender(),
-            request.getReceiver(),
-            request.getAmount(),
-            request.getTimestamp(),
-            request.getFee());
+        Transaction transaction = new Transaction(request);
         blockBuilderService.addTransaction(transaction);
         Block block = blockBuilderService.buildBlock();
         if (block != null) {
@@ -154,18 +150,20 @@ public class LedgerService implements ILedgerService {
     }
 
     @Override
-    public synchronized void uponConsensusReached(Block block) {
+    public synchronized void uponConsensusReached(ConsensusValue value) {
+        Block block = (Block) value;
         // TODO: Validate block (ledger-logic)
         // if not valid, return false
 
         for (Transaction transaction : block.getTransactions()) {
+            TransferRequest request = transaction.getTransferRequest();
             try {
                 // TODO remove same transaction from transaction pool
-                performTransfer(transaction.getSender(), transaction.getReceiver(), transaction.getAmount(), transaction.getTimestamp());
+                performTransfer(request.getSender(), request.getReceiver(), request.getAmount());
             } catch (AccountNotFoundException e) {
-                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), transaction.getSender()));
+                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), request.getSender()));
             } catch (InsufficientFundsException e) {
-                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Insufficient funds in account {1}", config.getId(), transaction.getSender()));
+                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Insufficient funds in account {1}", config.getId(), request.getSender()));
             }
         }
         // TODO: actually chain together nodes

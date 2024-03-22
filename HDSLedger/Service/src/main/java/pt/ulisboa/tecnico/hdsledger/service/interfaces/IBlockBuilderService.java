@@ -1,7 +1,7 @@
 package pt.ulisboa.tecnico.hdsledger.service.interfaces;
 
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
-import pt.ulisboa.tecnico.hdsledger.utilities.Transaction;
+import pt.ulisboa.tecnico.hdsledger.service.models.Block;
+import pt.ulisboa.tecnico.hdsledger.service.models.Transaction;
 
 public interface IBlockBuilderService {
     
