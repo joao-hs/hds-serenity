@@ -1,19 +1,18 @@
 package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
 import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 
 public class CommitMessage extends SharableMessage {
 
-    // Value
-    private Block block;
+    private ConsensusValue value;
 
-    public CommitMessage(Block block) {
-        this.block = block;
+    public CommitMessage(ConsensusValue value) {
+        this.value = value;
     }
 
-    public Block getBlock() {
-        return block;
+    public ConsensusValue getValue() {
+        return value;
     }
 
 }

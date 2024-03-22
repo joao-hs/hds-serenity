@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import pt.ulisboa.tecnico.hdsledger.communication.interfaces.Signable;
+import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
 
 /**
@@ -54,5 +55,19 @@ public abstract class SharableMessage implements Signable {
             }
         ).create();
         return gson.toJson(this);
+    }
+
+    /**
+     * 
+     * @param publicKey - path to the public key of the creator
+     * 
+     * @return true if the signature is valid, false otherwise
+     *  
+     */
+    public boolean verifySignature(String publicKey) {
+        if (this.creator == null || this.signature == null) {
+            return false;
+        }
+        return RSAEncryption.verifySignature(this.toSignable(), this.signature, publicKey);
     }
 }

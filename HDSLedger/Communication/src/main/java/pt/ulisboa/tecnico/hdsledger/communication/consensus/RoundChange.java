@@ -1,7 +1,7 @@
 package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
 import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 
 public class RoundChange extends SharableMessage {
     
@@ -12,18 +12,18 @@ public class RoundChange extends SharableMessage {
     // Round that has been prepared
     private Integer lastPreparedRound = null;
     // Value that has been prepared
-    private Block lastPreparedBlock = null;
+    private ConsensusValue lastPreparedValue = null;
 
     public RoundChange(Integer consensusInstance, Integer round) {
         this.consensusInstance = consensusInstance;
         this.round = round;
     }
 
-    public RoundChange(Integer consensusInstance, Integer round, Integer lastPreparedRound, Block lastPreparedBlock) {
+    public RoundChange(Integer consensusInstance, Integer round, Integer lastPreparedRound, ConsensusValue lastPreparedValue) {
         this.consensusInstance = consensusInstance;
         this.round = round;
         this.lastPreparedRound = lastPreparedRound;
-        this.lastPreparedBlock = lastPreparedBlock;
+        this.lastPreparedValue = lastPreparedValue;
     }
 
     public Integer getConsensusInstance() {
@@ -38,16 +38,16 @@ public class RoundChange extends SharableMessage {
         return this.lastPreparedRound;
     }
 
-    public Block getLastPreparedBlock(){
-        return this.lastPreparedBlock;
+    public ConsensusValue getLastPreparedValue(){
+        return this.lastPreparedValue;
     }
 
     public void setLastPreparedRound(Integer lastPreparedRound){
         this.lastPreparedRound = lastPreparedRound;
     }
         
-    public void setLastPreparedValue(Block lastPreparedBlock){
-        this.lastPreparedBlock = lastPreparedBlock;
+    public void setLastPreparedValue(ConsensusValue lastPreparedValue){
+        this.lastPreparedValue = lastPreparedValue;
     }
 
 }

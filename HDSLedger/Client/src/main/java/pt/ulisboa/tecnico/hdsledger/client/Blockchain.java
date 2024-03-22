@@ -23,7 +23,10 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
+import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
+import pt.ulisboa.tecnico.hdsledger.utilities.HDSSException;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
+import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;
 
 public class Blockchain {
@@ -146,16 +149,26 @@ public class Blockchain {
         System.out.println(
                 MessageFormat.format("{0} - Requesting Transfer {1} to {2}", clientConfig.getId(), amount, receiver));
         Pair<String, Integer> freshness = getFreshness();
+        TransferRequest request = new TransferRequest(
+            clientConfig.getId(), 
+            receiver,
+            amount,
+            fee,
+            freshness.getLeft(), // timestamp
+            freshness.getRight() // nonce
+        );
+
+        try {
+            request.setSignature(
+                RSAEncryption.sign(request.toSignable(), clientConfig.getPrivKeyPath())
+            );
+        } catch (Exception e) {
+            throw new HDSSException(ErrorMessage.SigningMessageError);
+        }
+
         link.broadcastClientPort(new BlockchainRequestBuilder(clientConfig.getId(), Message.Type.TRANSFER)
             .setSerializedRequest(
-                new TransferRequest(
-                    clientConfig.getId(), 
-                    receiver,
-                    amount,
-                    fee,
-                    freshness.getLeft(), // timestamp
-                    freshness.getRight() // nonce
-                ).toJson()
+                request.toJson()
             ).build()
         );
     }
@@ -163,9 +176,19 @@ public class Blockchain {
     public void balance(String target) {
         System.out.println(MessageFormat.format("{0} - Requesting Balance of {1}", clientConfig.getId(), target));
 
+        BalanceRequest request = new BalanceRequest(target);
+
+        try {
+            request.setSignature(
+                RSAEncryption.sign(request.toSignable(), clientConfig.getPrivKeyPath())
+            );
+        } catch (Exception e) {
+            throw new HDSSException(ErrorMessage.SigningMessageError);
+        }
+
         link.broadcastClientPort(new BlockchainRequestBuilder(clientConfig.getId(), Message.Type.BALANCE)
             .setSerializedRequest(
-                new BalanceRequest(target).toJson()
+                request.toJson()
             ).build()
         );
     }

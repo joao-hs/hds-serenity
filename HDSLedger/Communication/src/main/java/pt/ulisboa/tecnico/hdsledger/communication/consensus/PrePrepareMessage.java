@@ -1,19 +1,19 @@
 package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
 import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 
 public class PrePrepareMessage extends SharableMessage {
     
     // Value
-    private Block block;
+    private ConsensusValue value;
 
-    public PrePrepareMessage(Block block) {
-        this.block = block;
+    public PrePrepareMessage(ConsensusValue value) {
+        this.value = value;
     }
 
-    public Block getValue() {
-        return block;
+    public ConsensusValue getValue() {
+        return value;
     }
 
 }   

@@ -24,10 +24,11 @@ import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.INodeService;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.UDPService;
+import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
+import pt.ulisboa.tecnico.hdsledger.service.models.Block;
 import pt.ulisboa.tecnico.hdsledger.service.models.InstanceInfo;
 import pt.ulisboa.tecnico.hdsledger.service.models.MessageBucket;
 import pt.ulisboa.tecnico.hdsledger.service.models.ProgressIndicator;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
@@ -96,8 +97,8 @@ public class NodeService implements UDPService, INodeService {
             .findFirst().get(); // optional cannnot be empty
     }
  
-    public ConsensusMessage createConsensusMessage(Block block, int instance, int round) {
-        PrePrepareMessage prePrepareMessage = new PrePrepareMessage(block);
+    public ConsensusMessage createConsensusMessage(ConsensusValue value, int instance, int round) {
+        PrePrepareMessage prePrepareMessage = new PrePrepareMessage(value);
 
         ConsensusMessage consensusMessage = new ConsensusMessageBuilder(config.getId(), Message.Type.PRE_PREPARE)
                 .setConsensusInstance(instance)
@@ -149,11 +150,11 @@ public class NodeService implements UDPService, INodeService {
      *
      * @param inputValue Value to value agreed upon
      */
-    public void startConsensus(Block block) {
+    public void startConsensus(ConsensusValue value) {
 
         // Set initial consensus values
         int localConsensusInstance = this.consensusInstance.incrementAndGet();
-        InstanceInfo existingConsensus = this.instanceInfo.put(localConsensusInstance, new InstanceInfo(block));
+        InstanceInfo existingConsensus = this.instanceInfo.put(localConsensusInstance, new InstanceInfo(value));
 
 
         // If startConsensus was called for localConsensusInstance
@@ -177,28 +178,28 @@ public class NodeService implements UDPService, INodeService {
             InstanceInfo instance = this.instanceInfo.get(localConsensusInstance);
             LOGGER.log(Level.INFO,
                 MessageFormat.format("{0} - Node is leader, sending PRE-PREPARE message", config.getId()));
-            this.link.broadcastPort(this.createConsensusMessage(block, localConsensusInstance, instance.getCurrentRound()));
+            this.link.broadcastPort(this.createConsensusMessage(value, localConsensusInstance, instance.getCurrentRound()));
         } else {
             LOGGER.log(Level.INFO,
                     MessageFormat.format("{0} - Node is not leader, waiting for PRE-PREPARE message", config.getId()));
         }
     }
 
-    private Optional<Pair<Integer, Block>> highestPrepared(List<RoundChange> quorumRoundChange) {
+    private Optional<Pair<Integer, ConsensusValue>> highestPrepared(List<RoundChange> quorumRoundChange) {
         Optional<RoundChange> roundChange = quorumRoundChange.stream()
             .filter(rc -> rc.getLastPreparedRound() != null)
             .max(Comparator.comparing(rc -> rc.getLastPreparedRound()));
         if (roundChange.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(Pair.of(roundChange.get().getLastPreparedRound(), roundChange.get().getLastPreparedBlock()));
+        return Optional.of(Pair.of(roundChange.get().getLastPreparedRound(), roundChange.get().getLastPreparedValue()));
     }
 
     private boolean justifyPrePrepare(int instanceId, int round) {
         return (round == 1) ||
                 roundChangeMessages.getRoundChangeMessages(instanceId, round).stream()
                         .allMatch(roundChange ->
-                                roundChange.getLastPreparedRound() == null && roundChange.getLastPreparedBlock() == null) ||
+                                roundChange.getLastPreparedRound() == null && roundChange.getLastPreparedValue() == null) ||
                 highestPrepared(roundChangeMessages.getRoundChangeMessages(instanceId, round)).orElse(Pair.of(-1, new Block()))
                         .getRight().equals(prepareMessages.hasValidPrepareQuorum(config.getId(), instanceId, round).orElse(null));
     }
@@ -207,7 +208,7 @@ public class NodeService implements UDPService, INodeService {
         int round = instanceInfo.getCurrentRound();
         return roundChangeMessages.getRoundChangeMessages(instanceId, round).stream()
                 .allMatch(roundChange ->
-                        roundChange.getLastPreparedRound() == null && roundChange.getLastPreparedBlock() == null) ||
+                        roundChange.getLastPreparedRound() == null && roundChange.getLastPreparedValue() == null) ||
                 highestPrepared(roundChangeMessages.getRoundChangeMessages(instanceId, round)).orElse(Pair.of(-1, new Block()))
                         .getRight().equals(prepareMessages.hasValidPrepareQuorum(config.getId(), instanceId, round).orElse(null));
 
@@ -228,7 +229,7 @@ public class NodeService implements UDPService, INodeService {
 
         PrePrepareMessage prePrepareMessage = message.deserializePrePrepareMessage();
 
-        Block block = prePrepareMessage.getValue();
+        ConsensusValue value = prePrepareMessage.getValue();
 
         LOGGER.log(Level.INFO,
                 MessageFormat.format(
@@ -243,7 +244,7 @@ public class NodeService implements UDPService, INodeService {
         }
 
         // Set instance value
-        this.instanceInfo.putIfAbsent(consensusInstance, new InstanceInfo(round, block));
+        this.instanceInfo.putIfAbsent(consensusInstance, new InstanceInfo(round, value));
 
         
         // Within an instance of the algorithm, each upon rule is triggered at most once
@@ -287,7 +288,7 @@ public class NodeService implements UDPService, INodeService {
 
         PrepareMessage prepareMessage = message.deserializePrepareMessage();
 
-        Block block = prepareMessage.getBlock();
+        ConsensusValue value = prepareMessage.getValue();
 
         LOGGER.log(Level.INFO,
                 MessageFormat.format(
@@ -298,7 +299,7 @@ public class NodeService implements UDPService, INodeService {
         prepareMessages.addMessage(message);
 
         // Set instance values
-        this.instanceInfo.putIfAbsent(consensusInstance, new InstanceInfo(round, block));
+        this.instanceInfo.putIfAbsent(consensusInstance, new InstanceInfo(round, value));
         InstanceInfo instance = this.instanceInfo.get(consensusInstance);
 
         // Within an instance of the algorithm, each upon rule is triggered at most once
@@ -325,7 +326,7 @@ public class NodeService implements UDPService, INodeService {
         }
 
         // Find value with valid quorum
-        Optional<Block> preparedValue = prepareMessages.hasValidPrepareQuorum(config.getId(), consensusInstance, round);
+        Optional<ConsensusValue> preparedValue = prepareMessages.hasValidPrepareQuorum(config.getId(), consensusInstance, round);
         if (preparedValue.isPresent() && instance.getPreparedRound() < round) {
 
             this.stopTimeouts.get(consensusInstance).set(false);
@@ -393,7 +394,7 @@ public class NodeService implements UDPService, INodeService {
             return;
         }
 
-        Optional<Block> commitValue = commitMessages.hasValidCommitQuorum(config.getId(),
+        Optional<ConsensusValue> commitValue = commitMessages.hasValidCommitQuorum(config.getId(),
                 consensusInstance, round);
 
         if (commitValue.isPresent() && instance.getCommittedRound() < round) {
@@ -401,7 +402,7 @@ public class NodeService implements UDPService, INodeService {
             instance = this.instanceInfo.get(consensusInstance);
             instance.setCommittedRound(round);
 
-            Block block = commitValue.get();
+            ConsensusValue value = commitValue.get();
             
             this.stopTimeouts.get(consensusInstance).set(true);
 
@@ -414,7 +415,7 @@ public class NodeService implements UDPService, INodeService {
                 }
             }
             // Append value to the ledger (must be synchronized to be thread-safe)
-            ledger.uponConsensusReached(block);
+            ledger.uponConsensusReached(value);
             
             lastDecidedConsensusInstance.getAndIncrement();
             lastDecidedConsensusInstance.notifyAll();
@@ -441,7 +442,7 @@ public class NodeService implements UDPService, INodeService {
 
         int consensusInstance = message.getConsensusInstance();
         int round = message.getRound();
-        Block value;
+        ConsensusValue value;
 
         roundChangeMessages.addMessage(message);
 
@@ -494,10 +495,10 @@ public class NodeService implements UDPService, INodeService {
         if(roundChangeMessages.hasValidRoundChangeQuorum(config.getId(), consensusInstance, round) 
             && isLeader(this.config.getId(), round) && justifyRoundChange(consensusInstance, instance, roundChangeList)){
             
-            Optional<Pair<Integer, Block>> highestPrepared = highestPrepared(roundChangeList);
+            Optional<Pair<Integer, ConsensusValue>> highestPrepared = highestPrepared(roundChangeList);
             
-            value = highestPrepared.orElse(Pair.of((Integer) null, instance.getBlock())).getRight();
-            instance.setPreparedRound(highestPrepared.orElse(Pair.of((Integer) null, instance.getBlock())).getLeft());
+            value = highestPrepared.orElse(Pair.of((Integer) null, instance.getValue())).getRight();
+            instance.setPreparedRound(highestPrepared.orElse(Pair.of((Integer) null, instance.getValue())).getLeft());
             instance.setPreparedValue(value);
 
             link.broadcastPort(
@@ -519,7 +520,7 @@ public class NodeService implements UDPService, INodeService {
             this.stopTimeouts.get(consensusInstance).set(false); // set timer to running
 
             // create <ROUND-CHANGE, lambda_i, r_i, pr_i, pv_i>
-            RoundChange rc = new RoundChange(consensusInstance, instance.getCurrentRound(), instance.getPreparedRound(), instance.getPreparedBlock());
+            RoundChange rc = new RoundChange(consensusInstance, instance.getCurrentRound(), instance.getPreparedRound(), instance.getPreparedValue());
 
             ConsensusMessage m = new ConsensusMessageBuilder(config.getId(), Message.Type.ROUND_CHANGE)
                     .setConsensusInstance(consensusInstance)
@@ -590,8 +591,8 @@ public class NodeService implements UDPService, INodeService {
     }
 
     @Override
-    public void reachConsensus(Block block) {
-        startConsensus(block);
+    public void reachConsensus(ConsensusValue value) {
+        startConsensus(value);
     }
 
 }

@@ -5,11 +5,12 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
 
+import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.IBlockBuilderService;
-import pt.ulisboa.tecnico.hdsledger.utilities.Block;
+import pt.ulisboa.tecnico.hdsledger.service.models.Block;
+import pt.ulisboa.tecnico.hdsledger.service.models.Transaction;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
-import pt.ulisboa.tecnico.hdsledger.utilities.Transaction;
 
 public class BlockBuilderService implements IBlockBuilderService {
 
@@ -27,7 +28,7 @@ public class BlockBuilderService implements IBlockBuilderService {
     private PriorityQueue<Transaction> transactionPool = new PriorityQueue<Transaction>(this.initialCapacity, new Comparator<Transaction>() {
         @Override
         public int compare(Transaction t1, Transaction t2) {
-            return t2.getFee() - t1.getFee(); // Higher fee first
+            return t2.getTransferRequest().getFee() - t1.getTransferRequest().getFee(); // Higher fee first
         }
     });
 
@@ -50,7 +51,8 @@ public class BlockBuilderService implements IBlockBuilderService {
             Block block = new Block();
             while (availableFee > feeThreshold) {
                 Transaction transaction = transactionPool.poll();
-                availableFee -= transaction.getFee();
+                TransferRequest request = transaction.getTransferRequest();
+                availableFee -= request.getFee();
                 LOGGER.log(Level.INFO, MessageFormat.format("{0} - Adding transaction to block: {1}", config.getId(), transaction));
                 block.addTransaction(transaction);
             }
@@ -63,16 +65,18 @@ public class BlockBuilderService implements IBlockBuilderService {
         if (!isTransactionValid(transaction)) {
             return false;
         }
+        TransferRequest request = transaction.getTransferRequest();
         synchronized (transactionPool) {
-            availableFee += transaction.getFee();
+            availableFee += request.getFee();
             return transactionPool.add(transaction);
         }
     }
     
     @Override
     public boolean removeTransaction(Transaction transaction) {
+        TransferRequest request = transaction.getTransferRequest();
         synchronized (transactionPool) {
-            availableFee -= transaction.getFee();
+            availableFee -= request.getFee();
             return transactionPool.remove(transaction);
         }
     }
@@ -87,9 +91,10 @@ public class BlockBuilderService implements IBlockBuilderService {
 
     @Override
     public boolean isTransactionValid(Transaction transaction) {
-        return transaction.getFee() >= minFee 
-            && transaction.getFee() <= maxFee 
-            && transaction.getFee() / transaction.getAmount() >= minAmountFeeRatio;
+        TransferRequest request = transaction.getTransferRequest();
+        return request.getFee() >= minFee 
+            && request.getFee() <= maxFee 
+            && request.getFee() / request.getAmount() >= minAmountFeeRatio;
     }
     
 }
