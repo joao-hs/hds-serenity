@@ -15,12 +15,13 @@ import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.communication.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.BlockchainResponseBuilder;
+import pt.ulisboa.tecnico.hdsledger.service.interfaces.IClientService;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.UDPService;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;
 
-public class ClientService implements UDPService {
+public class ClientService implements UDPService, IClientService {
     
     private static final CustomLogger LOGGER = new CustomLogger(ClientService.class.getName());
 
@@ -84,6 +85,7 @@ public class ClientService implements UDPService {
     private void uponBalance(String issuer, BalanceRequest request) {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received BALANCE request from {1}",
             config.getId(), issuer));
+        // TODO: Check validity of request (network-logic)
         
         BalanceResponse response = ledger.balance(request);
         link.sendPort(issuer, new BlockchainResponseBuilder(config.getId(), Message.Type.BALANCE_RESPONSE)

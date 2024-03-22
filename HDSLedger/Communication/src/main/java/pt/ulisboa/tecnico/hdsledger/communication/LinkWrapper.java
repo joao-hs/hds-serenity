@@ -56,12 +56,4 @@ public abstract class LinkWrapper implements LinkInterface {
         return this.link.receive();
     }
 
-    public void multicastPort(Message data, int n) {
-        this.link.multicastPort(data, n);
-    }
-
-    public void multicastClientPort(Message data, int n) {
-        this.link.multicastClientPort(data, n);
-    }
-    
 }

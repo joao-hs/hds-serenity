@@ -90,11 +90,6 @@ public class LedgerService implements ILedgerService {
         return balance;
     }
 
-    public boolean validateTransaction(Transaction transaction) throws AccountNotFoundException, InsufficientFundsException {
-        // TODO: Validate transaction (Ledger-logic)
-        return true;
-    }
-
     public void performTransfer(String senderId, String receiverId, int amount, String timestamp) throws AccountNotFoundException, InsufficientFundsException {
         if (!accounts.contains(senderId)) {
             throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", senderId));
@@ -145,6 +140,7 @@ public class LedgerService implements ILedgerService {
 
     @Override
     public BalanceResponse balance(BalanceRequest request) {
+        // TODO: Validate request (Ledger-logic)
         BalanceResponse response = new BalanceResponse(request.getTarget());
         try {
             response.setBalance(getBalance(request.getTarget()));
@@ -164,9 +160,8 @@ public class LedgerService implements ILedgerService {
 
         for (Transaction transaction : block.getTransactions()) {
             try {
-                if (validateTransaction(transaction))
-                    // TODO remove same transaction from transaction pool
-                    performTransfer(transaction.getSender(), transaction.getReceiver(), transaction.getAmount(), transaction.getTimestamp());
+                // TODO remove same transaction from transaction pool
+                performTransfer(transaction.getSender(), transaction.getReceiver(), transaction.getAmount(), transaction.getTimestamp());
             } catch (AccountNotFoundException e) {
                 LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), transaction.getSender()));
             } catch (InsufficientFundsException e) {

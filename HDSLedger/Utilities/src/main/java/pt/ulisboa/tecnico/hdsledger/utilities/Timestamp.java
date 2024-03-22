@@ -4,10 +4,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public abstract class Timestamp {
-    //TODO(report): clients cannot transfer more than current balance in their account within the same time window
     private static final int secondWindow = 2 * 60; // two minutes
     public static String getCurrentTimestamp() {
-        // TODO(report): Messages that exceed the two-minute window are considered not fresh
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Date now = new Date();
         long time = now.getTime();

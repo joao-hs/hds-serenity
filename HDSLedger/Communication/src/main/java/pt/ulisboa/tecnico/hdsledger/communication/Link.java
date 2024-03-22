@@ -309,26 +309,4 @@ public class Link implements LinkInterface {
         
         return message;
     }
-
-    public void multicastPort(Message data, int n) {
-        //TODO: Make sure to include leader in the choosen nodes
-
-        List<String> nodes = new ArrayList<>(this.nodes.keySet());
-        //Collections.shuffle(nodes); //Comment until todo is done
-
-        for (int i = 0; i < n - 1; i++) {
-            this.linkWrapper.sendPort(nodes.get(i), data);
-        }
-    }
-
-    public void multicastClientPort(Message data, int n) {
-        //TODO: Make sure to include leader in the choosen nodes
-
-        List<String> nodes = new ArrayList<>(this.nodes.keySet());
-        //Collections.shuffle(nodes); //Comment until todo is done
-
-        for (int i = 0; i < n - 1; i++) {
-            this.linkWrapper.sendClientPort(nodes.get(i), data);
-        }
-    }
 }

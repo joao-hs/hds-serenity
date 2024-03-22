@@ -42,7 +42,6 @@ public class Blockchain {
     }
 
     private Pair<String, Integer> getFreshness() {
-        // TODO(report): freshness timestamp is to the minute
         Integer nonce = new Random().nextInt();
         String currentTimestamp = Timestamp.getCurrentTimestamp();
         // remove old entries
