@@ -1,10 +1,13 @@
 package pt.ulisboa.tecnico.hdsledger.service.services;
 
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Collection;
 import java.util.Arrays;
 import java.util.List;
@@ -14,8 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import org.apache.commons.lang3.tuple.Pair;
-
-import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.communication.builder.ConsensusMessageBuilder;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
@@ -28,12 +29,12 @@ import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.INodeService;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.UDPService;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.ValueValidator;
-import pt.ulisboa.tecnico.hdsledger.service.models.Block;
 import pt.ulisboa.tecnico.hdsledger.service.models.InstanceInfo;
 import pt.ulisboa.tecnico.hdsledger.service.models.MessageBucket;
 import pt.ulisboa.tecnico.hdsledger.service.models.ProgressIndicator;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
+import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
 public class NodeService implements UDPService, INodeService {
 
@@ -71,6 +72,8 @@ public class NodeService implements UDPService, INodeService {
     private final Map<Integer, ProgressIndicator> progressIndicators = new ConcurrentHashMap<>();
     // Changing round
     private final Map<Integer, AtomicBoolean> stopTimeouts = new ConcurrentHashMap<>();
+    // Valid consensus value
+    private final Set<String> validConsensusValues = new HashSet<>();
 
     public NodeService(LinkWrapper link, ProcessConfig config, ProcessConfig[] nodesConfig, ValueValidator validator) {
         this.link = link;
@@ -104,7 +107,24 @@ public class NodeService implements UDPService, INodeService {
     }
 
     private boolean isConsensusValueValid(String serializedValue) {
-        return serializedValue != null && validator.validate(serializedValue);
+        if (serializedValue == null) {
+            return false;
+        }
+        String hash;
+        try {
+            hash = RSAEncryption.digest(serializedValue);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return false;
+        }
+        if (validConsensusValues.contains(hash)) {
+            return true;
+        }
+        boolean ret = validator.validate(serializedValue);
+        if (ret) {
+            validConsensusValues.add(hash);
+        }
+        return ret;
     }
  
     public ConsensusMessage createConsensusMessage(String serializedValue, int instance, int round) {
