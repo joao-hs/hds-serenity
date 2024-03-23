@@ -1,8 +1,9 @@
 package pt.ulisboa.tecnico.hdsledger.communication.client;
 
 import com.google.gson.Gson;
+import pt.ulisboa.tecnico.hdsledger.communication.interfaces.ClientMessageInterface;
 
-public abstract class ClientResponse {
+public abstract class ClientResponse implements ClientMessageInterface {
     public enum Status {
         // General
         OK,

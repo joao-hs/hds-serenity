@@ -221,6 +221,7 @@ public class Link implements LinkInterface {
         String serialized = "";
         Boolean local = false;
         DatagramPacket response = null;
+        Gson gson = new Gson();
         
         // If there are messages in the local queue, receive those first
         if (this.localhostQueue.size() > 0) {
@@ -235,7 +236,20 @@ public class Link implements LinkInterface {
 
             byte[] buffer = Arrays.copyOfRange(response.getData(), 0, response.getLength());
             serialized = new String(buffer);
-            message = new Gson().fromJson(serialized, Message.class);
+
+            message = gson.fromJson(serialized, Message.class);
+            switch (message.getType()) {
+                case TRANSFER, BALANCE -> {
+                    message = gson.fromJson(serialized, BlockchainRequest.class);
+                }
+                case TRANSFER_RESPONSE, BALANCE_RESPONSE -> {
+                    message = gson.fromJson(serialized, BlockchainResponse.class);
+                }
+                case PRE_PREPARE, PREPARE, COMMIT, ROUND_CHANGE -> {
+                    message = gson.fromJson(serialized, ConsensusMessage.class);
+                }
+                default -> {}
+            }
 
             if (!RSAEncryption.verifySignature(message.toSignable(),
                 message.getSignature(),
@@ -266,7 +280,7 @@ public class Link implements LinkInterface {
 
         // It's not an ACK -> Deserialize for the correct type
         if (!local)
-            message = new Gson().fromJson(message.toJson(), this.messageClass);
+            message = gson.fromJson(message.toJson(), this.messageClass);
 
         boolean isRepeated = !receivedMessages.get(message.getSenderId()).add(messageId);
         Type originalType = message.getType();

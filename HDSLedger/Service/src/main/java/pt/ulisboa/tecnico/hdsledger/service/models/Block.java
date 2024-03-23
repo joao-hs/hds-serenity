@@ -6,11 +6,12 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gson.Gson;
+
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
-import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
-public class Block extends ConsensusValue {
+public class Block {
     // TODO: change to ordered set
     private Set<Transaction> transactions = new HashSet<>();
 
@@ -74,5 +75,9 @@ public class Block extends ConsensusValue {
         StringBuilder sb = new StringBuilder();
         transactions.forEach(transaction -> sb.append(transaction.toString()));
         return sb.toString();
+    }
+
+    public String toJson() {
+        return new Gson().toJson(this);
     }
 }

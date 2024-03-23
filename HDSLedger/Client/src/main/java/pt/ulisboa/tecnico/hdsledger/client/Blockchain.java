@@ -71,7 +71,9 @@ public class Blockchain {
         System.out.println(MessageFormat.format("{0} - Response Histogram: {1}", clientConfig.getId(), String.join(", ", responseHistogram.entrySet().toString())));
 
         return responseHistogram.entrySet().stream()
-                .filter(entry -> entry.getValue() > 2 * F_nodes).map(Map.Entry::getKey)
+                // need to have at least F + 1 votes, so that at least one correct process is voting for it
+                .filter(entry -> entry.getValue() == F_nodes + 1) // to avoid duplicates, we only consider the first response with F + 1 votes
+                .map(Map.Entry::getKey)
                 .findFirst() // there can only be one response with more than 2F votes
                 .orElse(null);
     }
@@ -110,7 +112,7 @@ public class Blockchain {
                                 if (majorityResponse != null) {
                                     System.out.println(MessageFormat.format("{0} - Majority Balance Response from {1}",
                                             clientConfig.getId(), message.getSenderId()));
-                                    System.out.println(MessageFormat.format("{0} - Balance of {1} is {2}",
+                                    System.out.println(MessageFormat.format("Balance of {1} is {2}",
                                             clientConfig.getId(), majorityResponse.getTarget(), majorityResponse.getBalance()));
                                 }
                             }
@@ -125,8 +127,9 @@ public class Blockchain {
                                 if (majorityResponse != null) {
                                     System.out.println(MessageFormat.format("{0} - Majority Transfer Response from {1}",
                                             clientConfig.getId(), message.getSenderId()));
-                                    System.out.println(MessageFormat.format("{0} - Transfer Response: {1}",
+                                    System.out.println(MessageFormat.format("Transfer Response: {1}",
                                             clientConfig.getId(), majorityResponse.getStatus().name()));
+                                    
                                 }
                             }
 
@@ -157,6 +160,7 @@ public class Blockchain {
             freshness.getLeft(), // timestamp
             freshness.getRight() // nonce
         );
+        request.setCreator(clientConfig.getId());
 
         try {
             request.setSignature(
@@ -177,6 +181,8 @@ public class Blockchain {
         System.out.println(MessageFormat.format("{0} - Requesting Balance of {1}", clientConfig.getId(), target));
 
         BalanceRequest request = new BalanceRequest(target);
+
+        request.setCreator(clientConfig.getId());
 
         try {
             request.setSignature(

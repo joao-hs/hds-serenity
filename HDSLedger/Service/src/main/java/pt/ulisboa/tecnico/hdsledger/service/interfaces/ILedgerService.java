@@ -4,7 +4,6 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
-import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 
 public interface ILedgerService {
     /**
@@ -27,5 +26,5 @@ public interface ILedgerService {
      *
      * @param value the value for which consensus was reached (needs to be a block)
      */
-    public void uponConsensusReached(ConsensusValue value);
+    public void uponConsensusReached(String serializedValue);
 }

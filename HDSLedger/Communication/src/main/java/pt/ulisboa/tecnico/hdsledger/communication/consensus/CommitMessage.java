@@ -1,18 +1,18 @@
 package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
 import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
+import pt.ulisboa.tecnico.hdsledger.communication.interfaces.ConsensusMessageInterface;
 
-public class CommitMessage extends SharableMessage {
+public class CommitMessage extends SharableMessage implements ConsensusMessageInterface {
 
-    private ConsensusValue value;
+    private String serializedValue;
 
-    public CommitMessage(ConsensusValue value) {
-        this.value = value;
+    public CommitMessage(String serializedValue) {
+        this.serializedValue = serializedValue;
     }
 
-    public ConsensusValue getValue() {
-        return value;
+    public String getSerializedValue() {
+        return serializedValue;
     }
 
 }

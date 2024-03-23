@@ -4,6 +4,7 @@ import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.LinkWrapperBuilder;
+import pt.ulisboa.tecnico.hdsledger.service.models.BlockValidator;
 import pt.ulisboa.tecnico.hdsledger.service.services.BlockBuilderService;
 import pt.ulisboa.tecnico.hdsledger.service.services.ClientService;
 import pt.ulisboa.tecnico.hdsledger.service.services.LedgerService;
@@ -45,7 +46,6 @@ public class Node {
 
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Running at {1}:({2}:{3});",
                 nodeConfig.getId(), nodeConfig.getHostname(), nodeConfig.getPort(), nodeConfig.getClientPort()));
-
             
             // Abstraction to send and receive messages
             LinkWrapper linkToNodes = new LinkWrapperBuilder(nodeConfig, nodeConfig.getPort(), nodeConfigs,
@@ -54,8 +54,10 @@ public class Node {
             LinkWrapper linkToClients = new LinkWrapperBuilder(nodeConfig, nodeConfig.getClientPort(), clientConfigs,
                 BlockchainRequest.class).build();
 
+            BlockValidator blockValidator = new BlockValidator(clientConfigs);
+
             // Services that implement listen from UDPService
-            NodeService nodeService = new NodeService(linkToNodes, nodeConfig, nodeConfigs);
+            NodeService nodeService = new NodeService(linkToNodes, nodeConfig, nodeConfigs, blockValidator);
             ClientService clientService = new ClientService(linkToClients, nodeConfig, clientConfigs);
 
             // Other services
