@@ -4,24 +4,23 @@ package pt.ulisboa.tecnico.hdsledger.service.models;
 import com.google.gson.GsonBuilder;
 
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 
 public class InstanceInfo {
 
     private int currentRound = 1;
     private int preparedRound = -1;
-    private ConsensusValue preparedValue;
+    private String preparedSerializedValue;
     private CommitMessage commitMessage;
-    private ConsensusValue value;
+    private String serializedValue;
     private int committedRound = -1;
 
-    public InstanceInfo(ConsensusValue value) {
-        this.value = value;
+    public InstanceInfo(String serializedValue) {
+        this.serializedValue = serializedValue;
     }
 
-    public InstanceInfo(int currentRound, ConsensusValue value) {
+    public InstanceInfo(int currentRound, String serializedValue) {
         this.currentRound = currentRound;
-        this.value = value;
+        this.serializedValue = serializedValue;
     }
 
     public int getCurrentRound() {
@@ -44,20 +43,20 @@ public class InstanceInfo {
         this.preparedRound = preparedRound;
     }
 
-    public ConsensusValue getPreparedValue() {
-        return preparedValue;
+    public String getPreparedSerializedValue() {
+        return preparedSerializedValue;
     }
 
-    public void setPreparedValue(ConsensusValue preparedValue) {
-        this.preparedValue = preparedValue;
+    public void setPreparedValue(String preparedValue) {
+        this.preparedSerializedValue = preparedValue;
     }
 
-    public ConsensusValue getValue() {
-        return value;
+    public String getSerializedValue() {
+        return serializedValue;
     }
 
-    public void setValue(ConsensusValue value) {
-        this.value = value;
+    public void setSerializedValue(String value) {
+        this.serializedValue = value;
     }
 
     public int getCommittedRound() {

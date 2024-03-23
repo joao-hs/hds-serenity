@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
+import com.google.gson.Gson;
+
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
@@ -14,7 +16,6 @@ import pt.ulisboa.tecnico.hdsledger.service.models.Account;
 import pt.ulisboa.tecnico.hdsledger.service.models.Block;
 import pt.ulisboa.tecnico.hdsledger.service.models.Transaction;
 import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;
-import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
@@ -121,7 +122,7 @@ public class LedgerService implements ILedgerService {
         blockBuilderService.addTransaction(transaction);
         Block block = blockBuilderService.buildBlock();
         if (block != null) {
-            nodeService.reachConsensus(block);
+            nodeService.reachConsensus(block.toJson());
         }
 
         // TODO: Wait for transaction to be added to the blockchain
@@ -150,8 +151,8 @@ public class LedgerService implements ILedgerService {
     }
 
     @Override
-    public synchronized void uponConsensusReached(ConsensusValue value) {
-        Block block = (Block) value;
+    public synchronized void uponConsensusReached(String serializedValue) {
+        Block block = new Gson().fromJson(serializedValue, Block.class);
         // TODO: Validate block (ledger-logic)
         // if not valid, return false
 

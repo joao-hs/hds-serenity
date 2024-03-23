@@ -1,9 +1,9 @@
 package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
 import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.ConsensusValue;
+import pt.ulisboa.tecnico.hdsledger.communication.interfaces.ConsensusMessageInterface;
 
-public class RoundChange extends SharableMessage {
+public class RoundChange extends SharableMessage implements ConsensusMessageInterface {
     
     // Consensus instance
     private Integer consensusInstance;
@@ -12,18 +12,18 @@ public class RoundChange extends SharableMessage {
     // Round that has been prepared
     private Integer lastPreparedRound = null;
     // Value that has been prepared
-    private ConsensusValue lastPreparedValue = null;
+    private String lastPreparedSerializedValue = null;
 
     public RoundChange(Integer consensusInstance, Integer round) {
         this.consensusInstance = consensusInstance;
         this.round = round;
     }
 
-    public RoundChange(Integer consensusInstance, Integer round, Integer lastPreparedRound, ConsensusValue lastPreparedValue) {
+    public RoundChange(Integer consensusInstance, Integer round, Integer lastPreparedRound, String lastPreparedSerializedValue) {
         this.consensusInstance = consensusInstance;
         this.round = round;
         this.lastPreparedRound = lastPreparedRound;
-        this.lastPreparedValue = lastPreparedValue;
+        this.lastPreparedSerializedValue = lastPreparedSerializedValue;
     }
 
     public Integer getConsensusInstance() {
@@ -38,16 +38,16 @@ public class RoundChange extends SharableMessage {
         return this.lastPreparedRound;
     }
 
-    public ConsensusValue getLastPreparedValue(){
-        return this.lastPreparedValue;
+    public String getLastPreparedSerializedValue(){
+        return this.lastPreparedSerializedValue;
     }
 
     public void setLastPreparedRound(Integer lastPreparedRound){
         this.lastPreparedRound = lastPreparedRound;
     }
         
-    public void setLastPreparedValue(ConsensusValue lastPreparedValue){
-        this.lastPreparedValue = lastPreparedValue;
+    public void setLastPreparedValue(String lastPreparedSerializedValue){
+        this.lastPreparedSerializedValue = lastPreparedSerializedValue;
     }
 
 }
