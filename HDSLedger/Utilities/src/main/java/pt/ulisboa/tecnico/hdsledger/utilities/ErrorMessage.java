@@ -5,8 +5,8 @@ public enum ErrorMessage {
     ConfigFileFormat("The configuration file has wrong syntax"),
     NoSuchNode("Can't send a message to a non existing node"),
     SocketSendingError("Error while sending message"),
-    SigningMessageError("Error while signign message"),
     HashingError("Error while hashing"),
+    SigningMessageError("Error while signing message"),
     CannotOpenSocket("Error while opening socket"),
     ClientNotFound("The client with the given ID was not found");
 

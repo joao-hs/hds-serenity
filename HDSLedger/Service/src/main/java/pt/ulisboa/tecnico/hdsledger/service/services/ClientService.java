@@ -12,10 +12,14 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.client.ClientRequest;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.IClientService;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.UDPService;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
+import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
+import pt.ulisboa.tecnico.hdsledger.utilities.HDSSException;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
+import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;
 
 public class ClientService implements UDPService, IClientService {
@@ -46,11 +50,57 @@ public class ClientService implements UDPService, IClientService {
         return Timestamp.sameWindow(currentTimestamp, request.getTimestamp());
     }
 
+    private boolean hasValidSignature(String issuer, ClientRequest request) {
+
+        for (ProcessConfig processConfig : clientsConfigs) {
+            if(processConfig.getId().equals(issuer) && processConfig.getId().equals(request.getCreator())){
+                try {
+                    return RSAEncryption.verifySignature(request.toString(),request.getSignature(),processConfig.getPubKeyPath());
+                } catch (Exception e) {
+                    throw new HDSSException(ErrorMessage.SigningMessageError);
+                }
+            }
+        }
+        return false; 
+    }
+
+    private boolean existsClient(String issuer, ClientRequest request) {
+
+        for (ProcessConfig processConfig : clientsConfigs) {
+            if(processConfig.getId().equals(issuer) && processConfig.getId().equals(request.getCreator())){
+                return true;
+            }
+        }
+        return false; 
+    }
+
+    private boolean isSenderValid(String issuer, TransferRequest request) {
+        return request.getSender().equals(issuer);
+    }
+
     private synchronized void uponTransfer(String issuer, TransferRequest request) {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received TRANSFER request from {1}",
             config.getId(), issuer));
 
         // TODO: Check validity of request (network-logic)
+        if (!existsClient(issuer, request)) {
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received request from non-existing client named {1}",
+                config.getId(), issuer));
+            return;
+        }
+
+        if (!hasValidSignature(issuer, request)) {
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received invalid signature request from {1}",
+                config.getId(), issuer));
+            return;
+        }
+
+        if (!isSenderValid(issuer, request)) {
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received invalid sender-issuer pair request from {1}",
+                config.getId(), issuer));
+            return;
+        }
+        
 
         if (!isFresh(issuer, request)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received non-fresh request from {1}",
@@ -69,6 +119,18 @@ public class ClientService implements UDPService, IClientService {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received BALANCE request from {1}",
             config.getId(), issuer));
         // TODO: Check validity of request (network-logic)
+
+        if (!existsClient(issuer, request)) {
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received request from non-existing client named {1}",
+                config.getId(), issuer));
+            return;
+        }
+
+        if (!hasValidSignature(issuer, request)) {
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received invalid signature request from {1}",
+                config.getId(), issuer));
+            return;
+        }
         
         BalanceResponse response = ledger.balance(request);
         link.sendPort(issuer, new BlockchainResponseBuilder(config.getId(), Message.Type.BALANCE_RESPONSE)
