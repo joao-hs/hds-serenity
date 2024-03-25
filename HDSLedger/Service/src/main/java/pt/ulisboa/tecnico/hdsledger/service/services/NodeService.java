@@ -94,6 +94,10 @@ public class NodeService implements UDPService, INodeService {
         return this.config;
     }
 
+    public Map<String, ProcessConfig> getConfigs(){
+        return this.nodesConfig;
+    }
+
     public int getConsensusInstance() {
         return this.consensusInstance.get();
     }

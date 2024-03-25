@@ -15,6 +15,16 @@ public class TransferResponse extends ClientResponse {
 
     private final Collection<CommitMessage> proofOfConsensus;
 
+    public TransferResponse(Status status) {
+        if (status == Status.OK) {
+            throw new IllegalArgumentException("TransferResponse with OK status must have proof of inclusion and consensus");
+        }
+        this.setStatus(status);
+        this.merkleRootHash = null;
+        this.merkleProofPath = null;
+        this.proofOfConsensus = null;
+    }
+
     public TransferResponse(Status status, String clientRequestHash, Pair<String, ArrayList<String>> proofOfInclusion, Collection<CommitMessage> proofOfConsensus) {
         this.setStatus(status);
         this.setClientRequestHash(clientRequestHash);

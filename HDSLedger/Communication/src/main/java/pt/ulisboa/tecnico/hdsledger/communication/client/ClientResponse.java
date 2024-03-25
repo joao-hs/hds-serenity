@@ -9,7 +9,9 @@ public abstract class ClientResponse implements ClientMessageInterface {
         OK,
         // TransferResponse
         INSUFFICIENT_FUNDS,
+        NO_FEE,
         BAD_DESTINATION,
+        BAD_SOURCE,
         BAD_SIGNATURE,
         BAD_FRESHNESS,
         NOT_FRESH,

@@ -44,6 +44,10 @@ public class ClientService implements UDPService, IClientService {
         return config;
     }
 
+    public ProcessConfig[] getConfigs(){
+        return clientsConfigs;
+    }
+
     private boolean isFresh(String issuer, TransferRequest request) {
         String currentTimestamp = Timestamp.getCurrentTimestamp();
         
