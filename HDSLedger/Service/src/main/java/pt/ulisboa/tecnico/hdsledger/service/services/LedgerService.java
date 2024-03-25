@@ -5,6 +5,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
@@ -125,9 +126,60 @@ public class LedgerService implements ILedgerService {
 
     }
 
+    private boolean existsSender(TransferRequest request, ProcessConfig[] clientProcesses){
+        for (ProcessConfig process : clientProcesses) {
+            if(process.getId().equals(request.getSender())){
+                return true;
+            }
+        }    
+        return false;
+    }
+
+    private boolean existsReceiver(TransferRequest request, Set<String> clientIds){
+        return clientIds.contains(request.getReceiver());
+    }
+
+    private boolean diffRecvSend(TransferRequest request){
+        return !request.getSender().equals(request.getReceiver());
+    }
+
+    private boolean positiveAmount(TransferRequest request){
+        return request.getAmount() > 0;
+    }
+
+    private boolean positiveFee(TransferRequest request){
+        return request.getFee() > 0;
+    }
+
     @Override
     public TransferResponse transfer(TransferRequest request) {
-        // TODO: Validate request (Ledger-logic)
+        ProcessConfig[] clientProcesses = clientService.getConfigs();
+        Map<String, ProcessConfig> nodeProcesses = nodeService.getConfigs();
+
+        if(!existsSender(request, clientProcesses)){  
+            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_SOURCE);
+            return response;
+        }
+
+        if(!existsReceiver(request, nodeProcesses.keySet())){  
+            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_DESTINATION);
+            return response;
+        }
+        
+        if(!diffRecvSend(request)){
+            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_DESTINATION);
+            return response;
+        }
+
+        if(!positiveAmount(request)){
+            TransferResponse response = new TransferResponse(TransferResponse.Status.INSUFFICIENT_FUNDS);
+            return response;
+        }
+
+        if(!positiveFee(request)){
+            TransferResponse response = new TransferResponse(TransferResponse.Status.NO_FEE);
+            return response;
+        }
 
         String requestHash = "";
         try {
@@ -169,9 +221,27 @@ public class LedgerService implements ILedgerService {
 
     }
 
+    private boolean existsTarget(BalanceRequest request, ProcessConfig[] clientProcesses){
+        for (ProcessConfig process : clientProcesses) {
+            if(process.getId().equals(request.getTarget())){
+                return true;
+            }
+        }    
+        return false;
+    }
+
     @Override
     public BalanceResponse balance(BalanceRequest request) {
         // TODO: Validate request (Ledger-logic)
+
+        ProcessConfig[] clientProcesses = clientService.getConfigs();
+
+        if(!existsTarget(request,clientProcesses)){  
+            BalanceResponse response = new BalanceResponse(request.getTarget());
+            response.setStatus(BalanceResponse.Status.ACCOUNT_NOT_FOUND);
+            return response;
+        }
+
         BalanceResponse response = new BalanceResponse(request.getTarget());
         try {
             response.setBalance(getBalance(request.getTarget()));
