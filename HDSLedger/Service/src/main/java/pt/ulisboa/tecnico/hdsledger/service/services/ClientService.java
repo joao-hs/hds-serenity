@@ -55,7 +55,7 @@ public class ClientService implements UDPService, IClientService {
         for (ProcessConfig processConfig : clientsConfigs) {
             if(processConfig.getId().equals(issuer) && processConfig.getId().equals(request.getCreator())){
                 try {
-                    return RSAEncryption.verifySignature(request.toString(),request.getSignature(),processConfig.getPubKeyPath());
+                    return request.verifySignature(processConfig.getPubKeyPath());
                 } catch (Exception e) {
                     throw new HDSSException(ErrorMessage.SigningMessageError);
                 }
@@ -82,7 +82,6 @@ public class ClientService implements UDPService, IClientService {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received TRANSFER request from {1}",
             config.getId(), issuer));
 
-        // TODO: Check validity of request (network-logic)
         if (!existsClient(issuer, request)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received request from non-existing client named {1}",
                 config.getId(), issuer));
@@ -118,7 +117,6 @@ public class ClientService implements UDPService, IClientService {
     private void uponBalance(String issuer, BalanceRequest request) {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received BALANCE request from {1}",
             config.getId(), issuer));
-        // TODO: Check validity of request (network-logic)
 
         if (!existsClient(issuer, request)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received request from non-existing client named {1}",
