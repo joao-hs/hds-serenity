@@ -5,6 +5,8 @@ import pt.ulisboa.tecnico.hdsledger.communication.interfaces.ClientMessageInterf
 
 public abstract class ClientResponse implements ClientMessageInterface {
     public enum Status {
+        // No Status yet
+        UNDEFINED,
         // General
         OK,
         // TransferResponse

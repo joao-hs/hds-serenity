@@ -27,6 +27,10 @@ public class LedgerService implements ILedgerService {
 
     private ConcurrentHashMap<String, Account> accounts = new ConcurrentHashMap<>();
 
+    private ConcurrentHashMap<Transaction,Object> transactionLocks = new ConcurrentHashMap<>();
+    
+    private ConcurrentHashMap<Transaction,TransferResponse.Status> transactionResps = new ConcurrentHashMap<>();
+
     private ArrayList<Block> blockchain = new ArrayList<>();
 
     private ProcessConfig config = null;
@@ -114,6 +118,20 @@ public class LedgerService implements ILedgerService {
 
     }
 
+    private synchronized Object getLockForTransaction(Transaction transaction) {
+        transactionLocks.putIfAbsent(transaction, new Object());
+        return transactionLocks.get(transaction);
+    }
+
+    private synchronized TransferResponse.Status getResponseForTransaction(Transaction transaction) {
+        transactionResps.putIfAbsent(transaction, TransferResponse.Status.UNDEFINED);
+        return transactionResps.get(transaction);
+    }
+
+    private synchronized void setResponseForTransaction(Transaction transaction ,TransferResponse.Status status) {
+        transactionResps.put(transaction, status);
+    }
+
     @Override
     public TransferResponse transfer(TransferRequest request) {
         // TODO: Validate request (Ledger-logic)
@@ -125,12 +143,24 @@ public class LedgerService implements ILedgerService {
             nodeService.reachConsensus(block.toJson());
         }
 
-        // TODO: Wait for transaction to be added to the blockchain
+        
+        getResponseForTransaction(transaction);
 
+
+        // TODO: Wait for transaction to be added to the blockchain
+        Object lock = getLockForTransaction(transaction);
+        synchronized(lock){
+                try {
+                    uponConsensusReached(block.toJson());
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+        }
 
         // TODO: Get result of the transaction
         
-        TransferResponse response = new TransferResponse(TransferResponse.Status.OK);
+        TransferResponse response = new TransferResponse(getResponseForTransaction(transaction));
         return response;
 
     }
@@ -162,11 +192,19 @@ public class LedgerService implements ILedgerService {
                 // TODO remove same transaction from transaction pool
                 performTransfer(request.getSender(), request.getReceiver(), request.getAmount());
             } catch (AccountNotFoundException e) {
+                setResponseForTransaction(transaction, TransferResponse.Status.ACCOUNT_NOT_FOUND);
                 LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), request.getSender()));
             } catch (InsufficientFundsException e) {
+                setResponseForTransaction(transaction, TransferResponse.Status.INSUFFICIENT_FUNDS);
                 LOGGER.log(Level.INFO, MessageFormat.format("{0} - Insufficient funds in account {1}", config.getId(), request.getSender()));
             }
+
+            Object lock = getLockForTransaction(transaction);
+            synchronized(lock){
+                lock.notify();
+            }
         }
+
         // TODO: actually chain together nodes
         blockchain.add(block);
     }
