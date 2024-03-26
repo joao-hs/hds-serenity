@@ -171,11 +171,6 @@ public class LedgerService implements ILedgerService {
             return response;
         }
 
-        if(!positiveAmount(request)){
-            TransferResponse response = new TransferResponse(TransferResponse.Status.INSUFFICIENT_FUNDS);
-            return response;
-        }
-
         if(!positiveFee(request)){
             TransferResponse response = new TransferResponse(TransferResponse.Status.NO_FEE);
             return response;
@@ -232,7 +227,6 @@ public class LedgerService implements ILedgerService {
 
     @Override
     public BalanceResponse balance(BalanceRequest request) {
-        // TODO: Validate request (Ledger-logic)
 
         ProcessConfig[] clientProcesses = clientService.getConfigs();
 
