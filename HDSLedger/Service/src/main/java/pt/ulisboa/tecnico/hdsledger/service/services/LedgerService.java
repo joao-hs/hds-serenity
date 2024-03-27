@@ -1,9 +1,14 @@
 package pt.ulisboa.tecnico.hdsledger.service.services;
 
+import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.google.gson.Gson;
 
@@ -11,14 +16,18 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.ILedgerService;
 import pt.ulisboa.tecnico.hdsledger.service.models.Account;
 import pt.ulisboa.tecnico.hdsledger.service.models.Block;
 import pt.ulisboa.tecnico.hdsledger.service.models.Transaction;
 import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
+import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
+import pt.ulisboa.tecnico.hdsledger.utilities.HDSSException;
 import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
+import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
 public class LedgerService implements ILedgerService {
     private static final CustomLogger LOGGER = new CustomLogger(LedgerService.class.getName());
@@ -26,6 +35,8 @@ public class LedgerService implements ILedgerService {
     private static LedgerService instance = null;
 
     private ConcurrentHashMap<String, Account> accounts = new ConcurrentHashMap<>();
+
+    private Map<String, Block> pendingBlocks = new ConcurrentHashMap<>();
 
     private ArrayList<Block> blockchain = new ArrayList<>();
 
@@ -118,19 +129,42 @@ public class LedgerService implements ILedgerService {
     public TransferResponse transfer(TransferRequest request) {
         // TODO: Validate request (Ledger-logic)
 
+        String requestHash = "";
+        try {
+            requestHash = RSAEncryption.digest(request.toJson()); // TODo
+        } catch (NoSuchAlgorithmException e) {
+            throw new HDSSException(ErrorMessage.HashingError);
+        }
+
         Transaction transaction = new Transaction(request);
         blockBuilderService.addTransaction(transaction);
         Block block = blockBuilderService.buildBlock();
         if (block != null) {
-            nodeService.reachConsensus(block.toJson());
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Block built: {1}", config.getId(), block.toJson()));
+            pendingBlocks.put(block.getMerkleRootHash(), block);
+            nodeService.reachConsensus(block.getSerializedBlock());
         }
 
         // TODO: Wait for transaction to be added to the blockchain
-
+        try {
+            Thread.sleep(3500); // TODO: remove this
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } 
 
         // TODO: Get result of the transaction
-        
-        TransferResponse response = new TransferResponse(TransferResponse.Status.OK);
+
+        TransferResponse response = new TransferResponse(
+            TransferResponse.Status.OK,
+            requestHash,
+            Pair.of(block.getMerkleRootHash(), block.getProofOfInclusion(transaction)), // proof of belonging in a block
+            block.getProofOfConsensus() // proof of the same block being agreed
+        );
+        LOGGER.log(Level.INFO, MessageFormat.format("{0} - Sending transfer response <{1},{2},<{3},{4}>,{5}>", config.getId(), response.getStatus().name(), response.getClientRequestHash(), response.getProofOfInclusion().getLeft(), new Gson().toJson(response.getProofOfInclusion().getRight()), response.getProofOfConsensus()));
+        /*
+        proof of block being in the blockchain will be done by the client
+        by receiving a quorum of this responses
+        */ 
         return response;
 
     }
@@ -151,13 +185,22 @@ public class LedgerService implements ILedgerService {
     }
 
     @Override
-    public synchronized void uponConsensusReached(String serializedValue) {
+    public synchronized void uponConsensusReached(String serializedValue, Collection<CommitMessage> commitMessages) {
+        LOGGER.log(Level.INFO, MessageFormat.format("{0} - Consensus reached for block: {1}, Commit Messages: {2}", config.getId(), serializedValue, new Gson().toJson(commitMessages)));
         Block block = new Gson().fromJson(serializedValue, Block.class);
+        block.setMerkleTree();
+        String blockKey = block.getMerkleRootHash();
+        if (pendingBlocks.containsKey(blockKey)) {
+            // Block is already created
+            block = pendingBlocks.get(blockKey);
+        }
+        block.addAllCommitMessages(commitMessages); // no need to verify since we trust ourselves
         // TODO: Validate block (ledger-logic)
         // if not valid, return false
 
         for (Transaction transaction : block.getTransactions()) {
             TransferRequest request = transaction.getTransferRequest();
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Processing transaction: {1}", config.getId(), request.toJson()));
             try {
                 // TODO remove same transaction from transaction pool
                 performTransfer(request.getSender(), request.getReceiver(), request.getAmount());

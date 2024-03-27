@@ -6,6 +6,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import pt.ulisboa.tecnico.hdsledger.communication.interfaces.Signable;
+import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
+import pt.ulisboa.tecnico.hdsledger.utilities.HDSSException;
 import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
 
@@ -23,18 +25,9 @@ public abstract class SharableMessage implements Signable {
         return creator;
     }
 
-    public void setCreator(String creator) {
-        this.creator = creator;
-    }
-
     public String getSignature() {
         return signature;
     }
-
-    public void setSignature(String signature) {
-        this.signature = signature;
-    }
-
 
     public String toJson() {
         return new Gson().toJson(this);
@@ -69,5 +62,15 @@ public abstract class SharableMessage implements Signable {
             return false;
         }
         return RSAEncryption.verifySignature(this.toSignable(), this.signature, publicKey);
+    }
+
+    public void sign(String creator, String privateKey) {
+        this.creator = creator;
+        try {
+            this.signature = RSAEncryption.sign(this.toSignable(), privateKey);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new HDSSException(ErrorMessage.SigningMessageError);
+        }
     }
 }

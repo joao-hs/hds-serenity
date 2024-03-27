@@ -19,12 +19,22 @@ public abstract class ClientResponse implements ClientMessageInterface {
 
     private Status status;
 
+    private String clientRequestHash;
+
     public Status getStatus() {
         return status;
     }
 
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public String getClientRequestHash() {
+        return clientRequestHash;
+    }
+
+    public void setClientRequestHash(String clientRequestHash) {
+        this.clientRequestHash = clientRequestHash;
     }
 
     public String toJson() {
