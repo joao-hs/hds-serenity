@@ -5,6 +5,9 @@ import pt.ulisboa.tecnico.hdsledger.communication.BlockchainResponse;
 
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,8 +15,11 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.BlockchainRequestBuilder;
@@ -22,24 +28,30 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
 import pt.ulisboa.tecnico.hdsledger.utilities.HDSSException;
+import pt.ulisboa.tecnico.hdsledger.utilities.MerkleTree;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;
 
 public class Blockchain {
     private ProcessConfig clientConfig;
+    private Map<String, ProcessConfig> nodesConfig;
     private Integer N_nodes;
     private Integer F_nodes;
     private Map<String, TreeSet<Integer>> freshness = new TreeMap<>();
-    private Map<Integer, List<ClientResponse>> responses = new HashMap<>();
+    private Map<String, List<ClientResponse>> responses = new HashMap<>();
+    private Map<String, TransferRequest> pendingTransfers = new HashMap<>();
     private LinkWrapper link;
 
     public Blockchain(ProcessConfig clientConfig, ProcessConfig[] nodesConfig) {
         this.clientConfig = clientConfig;
         this.N_nodes = nodesConfig.length;
+        this.nodesConfig = Arrays.stream(nodesConfig).collect(
+            Collectors.toMap(ProcessConfig::getId, c -> c));
         this.F_nodes = Math.floorDiv(N_nodes - 1, 3);
         this.link = new RegularLinkWrapper(clientConfig, clientConfig.getPort(), nodesConfig, BlockchainResponse.class);
     }
@@ -59,23 +71,39 @@ public class Blockchain {
         return Pair.of(currentTimestamp, nonce);
     }
 
-    private ClientResponse responseMajority(int messageId) {
-        if (!responses.containsKey(messageId)) {
+    private ClientResponse responseMajority(String requestHash) {
+        if (!responses.containsKey(requestHash)) {
             return null;
         }
-        Map<ClientResponse, Integer> responseHistogram = new HashMap<>();
-        for (ClientResponse response : responses.get(messageId)) {
-            responseHistogram.put(response, responseHistogram.getOrDefault(response, 0) + 1);
+        Map<Integer, Pair<ClientResponse, Integer>> responseHistogram = new HashMap<>();
+        for (ClientResponse response : responses.get(requestHash)) {
+            Pair<ClientResponse, Integer> pair = responseHistogram.getOrDefault(response.hashCode(), Pair.of(response, 0));
+            pair = Pair.of(pair.getLeft(), pair.getRight() + 1);
+            responseHistogram.put(response.hashCode(), pair);
         }
 
         System.out.println(MessageFormat.format("{0} - Response Histogram: {1}", clientConfig.getId(), String.join(", ", responseHistogram.entrySet().toString())));
 
         return responseHistogram.entrySet().stream()
                 // need to have at least F + 1 votes, so that at least one correct process is voting for it
-                .filter(entry -> entry.getValue() == F_nodes + 1) // to avoid duplicates, we only consider the first response with F + 1 votes
-                .map(Map.Entry::getKey)
+                .filter(entry -> entry.getValue().getRight() == F_nodes + 1) // to avoid duplicates, we only consider the first response with F + 1 votes
+                .map(Map.Entry::getValue)
+                .map(Pair::getLeft)
                 .findFirst() // there can only be one response with more than 2F votes
                 .orElse(null);
+    }
+
+    private boolean verifyProofOfConsensus(Collection<CommitMessage> commitMessages) {
+        // ! Assuming that this proof of consensus is sent by at least one correct node
+        // 1. Only one commit message per node
+        Map<String, CommitMessage> commitMessagesMap = commitMessages.stream()
+            .collect(Collectors.toMap(CommitMessage::getCreator, c -> c));
+        
+        // 2. At least F + 1 commit messages with the same value
+        // Why? 
+        return commitMessagesMap.values().stream()
+            .collect(Collectors.groupingBy(CommitMessage::getSerializedValue, Collectors.counting()))
+            .values().stream().anyMatch(votes -> votes >= 2 * F_nodes + 1);
     }
 
     /*
@@ -102,35 +130,11 @@ public class Blockchain {
                                         clientConfig.getId(), message.getSenderId()));
                             
                             case BALANCE_RESPONSE -> {
-                                System.out.println(MessageFormat.format("{0} - Received Balance Response from {1}",
-                                        clientConfig.getId(), message.getSenderId()));
-                                BalanceResponse response = ((BlockchainResponse) message).deserializeBalanceResponse();
-                                System.out.println(MessageFormat.format("{0} - BalanceResponse<{1},{2},{3}>, hash: {4}", clientConfig.getId(), response.getStatus().name(), response.getTarget(), String.valueOf(response.getBalance()), String.valueOf(response.hashCode())));
-                                responses.putIfAbsent(message.getMessageId(), new LinkedList<>());
-                                responses.get(message.getMessageId()).add(response);
-                                BalanceResponse majorityResponse = (BalanceResponse) responseMajority(message.getMessageId());
-                                if (majorityResponse != null) {
-                                    System.out.println(MessageFormat.format("{0} - Majority Balance Response from {1}",
-                                            clientConfig.getId(), message.getSenderId()));
-                                    System.out.println(MessageFormat.format("Balance of {1} is {2}",
-                                            clientConfig.getId(), majorityResponse.getTarget(), majorityResponse.getBalance()));
-                                }
+                                uponBalanceResponse((BlockchainResponse) message);
                             }
 
                             case TRANSFER_RESPONSE -> {
-                                System.out.println(MessageFormat.format("{0} - Received Transfer Response from {1}",
-                                        clientConfig.getId(), message.getSenderId()));
-                                TransferResponse response = ((BlockchainResponse) message).deserializeTransferResponse();
-                                responses.putIfAbsent(message.getMessageId(), new LinkedList<>());
-                                responses.get(message.getMessageId()).add(response);
-                                TransferResponse majorityResponse = (TransferResponse) responseMajority(message.getMessageId());
-                                if (majorityResponse != null) {
-                                    System.out.println(MessageFormat.format("{0} - Majority Transfer Response from {1}",
-                                            clientConfig.getId(), message.getSenderId()));
-                                    System.out.println(MessageFormat.format("Transfer Response: {1}",
-                                            clientConfig.getId(), majorityResponse.getStatus().name()));
-                                    
-                                }
+                                uponTransferResponse((BlockchainResponse) message);
                             }
 
                             default ->
@@ -148,10 +152,33 @@ public class Blockchain {
 
     }
 
+    public void balance(String target) {
+        System.out.println(MessageFormat.format("{0} - Requesting Balance of {1}", clientConfig.getId(), target));
+
+        BalanceRequest request = new BalanceRequest(target);
+        request.sign(clientConfig.getId(), clientConfig.getPrivKeyPath());
+
+        String requestHash = "";
+        try {
+            requestHash = RSAEncryption.digest(request.toJson());
+        } catch (Exception e) {
+            throw new HDSSException(ErrorMessage.HashingError);
+        }
+
+        responses.put(requestHash, new LinkedList<>());
+
+        link.broadcastClientPort(new BlockchainRequestBuilder(clientConfig.getId(), Message.Type.BALANCE)
+            .setSerializedRequest(
+                request.toJson()
+            ).build()
+        );
+    }
+
     public void transfer(String receiver, int amount, int fee) {
         System.out.println(
                 MessageFormat.format("{0} - Requesting Transfer {1} to {2}", clientConfig.getId(), amount, receiver));
         Pair<String, Integer> freshness = getFreshness();
+        String requestHash = "";
         TransferRequest request = new TransferRequest(
             clientConfig.getId(), 
             receiver,
@@ -160,15 +187,16 @@ public class Blockchain {
             freshness.getLeft(), // timestamp
             freshness.getRight() // nonce
         );
-        request.setCreator(clientConfig.getId());
-
+        request.sign(clientConfig.getId(), clientConfig.getPrivKeyPath());
+        
         try {
-            request.setSignature(
-                RSAEncryption.sign(request.toSignable(), clientConfig.getPrivKeyPath())
-            );
+            requestHash = RSAEncryption.digest(request.toJson());
         } catch (Exception e) {
-            throw new HDSSException(ErrorMessage.SigningMessageError);
+            throw new HDSSException(ErrorMessage.HashingError);
         }
+        
+        pendingTransfers.put(requestHash, request);
+        responses.put(requestHash, new LinkedList<>());
 
         link.broadcastClientPort(new BlockchainRequestBuilder(clientConfig.getId(), Message.Type.TRANSFER)
             .setSerializedRequest(
@@ -177,25 +205,71 @@ public class Blockchain {
         );
     }
 
-    public void balance(String target) {
-        System.out.println(MessageFormat.format("{0} - Requesting Balance of {1}", clientConfig.getId(), target));
-
-        BalanceRequest request = new BalanceRequest(target);
-
-        request.setCreator(clientConfig.getId());
-
-        try {
-            request.setSignature(
-                RSAEncryption.sign(request.toSignable(), clientConfig.getPrivKeyPath())
-            );
-        } catch (Exception e) {
-            throw new HDSSException(ErrorMessage.SigningMessageError);
+    public synchronized void uponBalanceResponse(BlockchainResponse response) {
+        System.out.println(MessageFormat.format("{0} - Received Balance Response from {1}",
+            clientConfig.getId(), response.getSenderId()));
+        BalanceResponse balanceResponse = ((BlockchainResponse) response).deserializeBalanceResponse();
+        responses.get(balanceResponse.getClientRequestHash()).add(balanceResponse);
+        BalanceResponse majorityResponse = (BalanceResponse) responseMajority(balanceResponse.getClientRequestHash());
+        if (majorityResponse != null) {
+            System.out.println(MessageFormat.format("{0} - Majority Balance Response from {1}",
+                    clientConfig.getId(), response.getSenderId()));
+            System.out.println(MessageFormat.format("Balance of {1} is {2}",
+                    clientConfig.getId(), majorityResponse.getTarget(), majorityResponse.getBalance()));
         }
-
-        link.broadcastClientPort(new BlockchainRequestBuilder(clientConfig.getId(), Message.Type.BALANCE)
-            .setSerializedRequest(
-                request.toJson()
-            ).build()
-        );
     }
+
+
+    public synchronized void uponTransferResponse(BlockchainResponse response) {
+        System.out.println(MessageFormat.format("{0} - Received Transfer Response from {1}",
+            clientConfig.getId(), response.getSenderId()));
+        TransferResponse transferResponse = ((BlockchainResponse) response).deserializeTransferResponse();
+        responses.get(transferResponse.getClientRequestHash()).add(transferResponse);
+        TransferResponse majorityResponse = (TransferResponse) responseMajority(transferResponse.getClientRequestHash());
+        if (majorityResponse != null) {
+            uponCorrectTransferResponse(majorityResponse);
+        }
+    }
+
+    private void uponCorrectTransferResponse(TransferResponse majorityResponse) {
+        // Validate response
+        // 1. Is the transaction in the block?
+        TransferRequest request = pendingTransfers.get(majorityResponse.getClientRequestHash());
+        if (request == null) {
+            System.out.println(MessageFormat.format("{0} - Transfer with hash {1} failed to find the request",
+                clientConfig.getId(), majorityResponse.getClientRequestHash()));
+            pendingTransfers.remove(majorityResponse.getClientRequestHash()); // TODO: explore
+            return;
+        }
+        Pair<String, ArrayList<String>> proofOfInclusion = majorityResponse.getProofOfInclusion();
+        if (!MerkleTree.verifyProof(
+            request.toJson(), // ! assuming the full leaves are just transfer requests in json
+            proofOfInclusion.getLeft(), // merkle root
+            proofOfInclusion.getRight() // merkle sibling path to root
+        )) {
+            System.out.println(MessageFormat.format("{0} - Transfer of {1} to {2} failed verification of inclusion in block",
+                clientConfig.getId(), request.getAmount(), request.getReceiver()));
+            pendingTransfers.remove(majorityResponse.getClientRequestHash()); // TODO: explore
+            return;
+        }
+        // 2. Was the block agreed on consensus?
+        if (!verifyProofOfConsensus(majorityResponse.getProofOfConsensus())) {
+            
+            System.out.println(MessageFormat.format("{0} - Transfer of {1} to {2} failed verification of consensus",
+                clientConfig.getId(), request.getAmount(), request.getReceiver()));
+            return;
+        }
+        // 3. Is the block in the blockchain?
+        /*
+         * We trust that correct nodes will not lie about the block being in the blockchain
+         * Since we have at least 1 correct node responding with this information,
+         * we can conclude that the block is in the blockchain
+         */
+        
+        System.out.println(MessageFormat.format("#### Transfer of {1} to {2} was {3}",
+            clientConfig.getId(), request.getAmount(), request.getReceiver(), majorityResponse.getStatus().name()));
+        
+        pendingTransfers.remove(majorityResponse.getClientRequestHash());
+    }
+
 }

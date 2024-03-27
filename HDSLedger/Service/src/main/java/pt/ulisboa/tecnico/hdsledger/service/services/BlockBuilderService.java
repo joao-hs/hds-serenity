@@ -56,6 +56,7 @@ public class BlockBuilderService implements IBlockBuilderService {
                 LOGGER.log(Level.INFO, MessageFormat.format("{0} - Adding transaction to block: {1}", config.getId(), transaction));
                 block.addTransaction(transaction);
             }
+            block.setMerkleTree();
             return block;
         }
     }

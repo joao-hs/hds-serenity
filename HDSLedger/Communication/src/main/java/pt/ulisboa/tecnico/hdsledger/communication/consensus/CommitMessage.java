@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 
+import java.util.Objects;
+
 import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.interfaces.ConsensusMessageInterface;
 
@@ -15,4 +17,8 @@ public class CommitMessage extends SharableMessage implements ConsensusMessageIn
         return serializedValue;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getCreator(), getSignature(), serializedValue);
+    }
 }

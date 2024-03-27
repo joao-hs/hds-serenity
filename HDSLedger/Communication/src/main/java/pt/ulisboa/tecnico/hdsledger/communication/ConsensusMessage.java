@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrePrepareMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrepareMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.consensus.RoundChange;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.RoundChangeMessage;
 
 /**
  * Wrapper class for all consensus messages.
@@ -41,8 +41,8 @@ public class ConsensusMessage extends Message {
         return new Gson().fromJson(this.message, CommitMessage.class);
     }
 
-    public RoundChange deserializeRoundChangeMessage() {
-        return new Gson().fromJson(this.message, RoundChange.class);
+    public RoundChangeMessage deserializeRoundChangeMessage() {
+        return new Gson().fromJson(this.message, RoundChangeMessage.class);
     }
     
     public String getMessage() {

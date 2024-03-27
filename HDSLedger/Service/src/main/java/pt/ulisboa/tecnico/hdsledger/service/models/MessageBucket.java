@@ -12,12 +12,13 @@ import java.util.stream.Stream;
 import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.communication.ConsensusMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrepareMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.consensus.RoundChange;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.RoundChangeMessage;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 
-public class MessageBucket {
+public class MessageBucket{
 
     private static final CustomLogger LOGGER = new CustomLogger(MessageBucket.class.getName());
     // Quorum size
@@ -39,13 +40,13 @@ public class MessageBucket {
      * 
      * @param message
      */
-    public void addMessage(ConsensusMessage message) {
+    public void addMessage(ConsensusMessage message, String creator) {
         int consensusInstance = message.getConsensusInstance();
         int round = message.getRound();
 
         bucket.putIfAbsent(consensusInstance, new ConcurrentHashMap<>());
         bucket.get(consensusInstance).putIfAbsent(round, new ConcurrentHashMap<>());
-        bucket.get(consensusInstance).get(round).put(message.getSenderId(), message);
+        bucket.get(consensusInstance).get(round).put(creator, message);
     }
 
     public Optional<String> hasValidPrepareQuorum(String nodeId, int instance, int round) {
@@ -96,7 +97,7 @@ public class MessageBucket {
      * return the round change message with the lowest round
      * else, return optional.empty
      */
-    public Optional<RoundChange> hasValidRoundChangeSet(String nodeId, int instance, int round) {
+    public Optional<RoundChangeMessage> hasValidRoundChangeSet(String nodeId, int instance, int round) {
         // 1. Count the number of round change messages with the same instance and higher round
         
         Stream<ConsensusMessage> validRoundChangeMessages = bucket.get(instance).get(round).values()
@@ -119,12 +120,24 @@ public class MessageBucket {
         return bucket.get(instance).get(round);
     }
 
-    public List<RoundChange> getRoundChangeMessages(int instance, int round) {
+    public Collection<CommitMessage> getCommitMessages(int instance, int round) {
         Collection<ConsensusMessage> allMessages = bucket.get(instance).get(round).values();
         if (allMessages.isEmpty()) {
             return Collections.emptyList();
         }
         return allMessages.stream()
+            .filter((message) -> message.getType().equals(Message.Type.COMMIT))
+            .map((message) -> message.deserializeCommitMessage())
+            .toList();
+    }
+
+    public List<RoundChangeMessage> getRoundChangeMessages(int instance, int round) {
+        Collection<ConsensusMessage> allMessages = bucket.get(instance).get(round).values();
+        if (allMessages.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return allMessages.stream()
+            .filter((message) -> message.getType().equals(Message.Type.ROUND_CHANGE))
             .map((message) -> message.deserializeRoundChangeMessage())
             .toList();
     }

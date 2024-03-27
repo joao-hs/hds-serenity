@@ -3,7 +3,7 @@ package pt.ulisboa.tecnico.hdsledger.communication.consensus;
 import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.interfaces.ConsensusMessageInterface;
 
-public class RoundChange extends SharableMessage implements ConsensusMessageInterface {
+public class RoundChangeMessage extends SharableMessage implements ConsensusMessageInterface {
     
     // Consensus instance
     private Integer consensusInstance;
@@ -14,12 +14,12 @@ public class RoundChange extends SharableMessage implements ConsensusMessageInte
     // Value that has been prepared
     private String lastPreparedSerializedValue = null;
 
-    public RoundChange(Integer consensusInstance, Integer round) {
+    public RoundChangeMessage(Integer consensusInstance, Integer round) {
         this.consensusInstance = consensusInstance;
         this.round = round;
     }
 
-    public RoundChange(Integer consensusInstance, Integer round, Integer lastPreparedRound, String lastPreparedSerializedValue) {
+    public RoundChangeMessage(Integer consensusInstance, Integer round, Integer lastPreparedRound, String lastPreparedSerializedValue) {
         this.consensusInstance = consensusInstance;
         this.round = round;
         this.lastPreparedRound = lastPreparedRound;

@@ -1,22 +1,33 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
+import pt.ulisboa.tecnico.hdsledger.utilities.MerkleTree;
 import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
 public class Block {
+    // Block Header
+    private Block previousBlock;
+    private String chainHash = null;
+    private Collection<CommitMessage> proofOfConsensus = new HashSet<>();
+    private MerkleTree merkleTree = null;
+
+    // Block Body - needs `Expose` annotation to be serialized
     // TODO: change to ordered set
+    @Expose
     private Set<Transaction> transactions = new HashSet<>();
 
-    private Block previousBlock;
-    private String hash = null;
 
     public Block() {
         // empty block
@@ -33,8 +44,6 @@ public class Block {
                 "2024-02-25 16:59:07", // random timestamp
                 0 // nonce
             );
-            ownRequest.setCreator(null);
-            ownRequest.setSignature(null);
 
             transactions.add(new Transaction(ownRequest));
         });
@@ -42,7 +51,7 @@ public class Block {
         this.previousBlock = null;
 
         try {
-            this.hash = RSAEncryption.digest(concatTransactions());
+            this.chainHash = RSAEncryption.digest(concatTransactions());
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
@@ -60,21 +69,48 @@ public class Block {
         return transactions;
     }
 
-    public void setHash() {
-        if (hash != null) {
+    public void addAllCommitMessages(Collection<CommitMessage> commitMessages) {
+        proofOfConsensus.addAll(commitMessages);
+    }
+
+    public void setChainHash() {
+        if (chainHash != null) {
             return;
         }
         try {
-            this.hash = RSAEncryption.digest(concatTransactions() + previousBlock.hash);
+            this.chainHash = RSAEncryption.digest(concatTransactions() + previousBlock.chainHash);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setMerkleTree() {
+        merkleTree = new MerkleTree(transactions.stream().map(Transaction::toString).toList());
+    }
+
+    public String getMerkleRootHash() {
+        return merkleTree.getRoot();
+    }
+
+    public ArrayList<String> getProofOfInclusion(Transaction transaction) {
+        return merkleTree.getProof(transaction.toString());
+    }
+
+    public Collection<CommitMessage> getProofOfConsensus() {
+        return proofOfConsensus;
     }
 
     private String concatTransactions() {
         StringBuilder sb = new StringBuilder();
         transactions.forEach(transaction -> sb.append(transaction.toString()));
         return sb.toString();
+    }
+
+    public String getSerializedBlock() {
+        Gson gson = new GsonBuilder()
+            .excludeFieldsWithoutExposeAnnotation()
+            .create();
+        return gson.toJson(this);
     }
 
     public String toJson() {
