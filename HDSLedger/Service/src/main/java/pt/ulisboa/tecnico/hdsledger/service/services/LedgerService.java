@@ -15,6 +15,7 @@ import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
@@ -126,13 +127,8 @@ public class LedgerService implements ILedgerService {
 
     }
 
-    private boolean existsSender(TransferRequest request, ProcessConfig[] clientProcesses){
-        for (ProcessConfig process : clientProcesses) {
-            if(process.getId().equals(request.getSender())){
-                return true;
-            }
-        }    
-        return false;
+    private boolean existsSender(TransferRequest request, Set<String> clientIds){
+        return clientIds.contains(request.getSender());
     }
 
     private boolean existsReceiver(TransferRequest request, Set<String> clientIds){
@@ -153,40 +149,41 @@ public class LedgerService implements ILedgerService {
 
     @Override
     public TransferResponse transfer(TransferRequest request) {
-        ProcessConfig[] clientProcesses = clientService.getConfigs();
-        Map<String, ProcessConfig> nodeProcesses = nodeService.getConfigs();
+        Map<String, ProcessConfig> clientProcesses = clientService.getConfigs();
 
-        if(!existsSender(request, clientProcesses)){  
-            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_SOURCE);
+        String requestHash = "";
+        try {
+            requestHash = RSAEncryption.digest(request.toJson());
+        } catch (NoSuchAlgorithmException e) {
+            throw new HDSSException(ErrorMessage.HashingError);
+        }
+
+        if (!existsSender(request, clientProcesses.keySet())){  
+            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_SOURCE, requestHash);
             return response;
         }
 
-        if(!existsReceiver(request, nodeProcesses.keySet())){  
-            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_DESTINATION);
+        if (!existsReceiver(request, clientProcesses.keySet())){  
+            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_DESTINATION, requestHash);
             return response;
         }
         
-        if(!diffRecvSend(request)){
-            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_DESTINATION);
+        if (!diffRecvSend(request)){
+            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_DESTINATION, requestHash);
             return response;
         }
 
         if (!positiveAmount(request)){
-            TransferResponse response = new TransferResponse(TransferResponse.Status.NO_AMOUNT);
+            TransferResponse response = new TransferResponse(TransferResponse.Status.NO_AMOUNT, requestHash);
             return response;
         }
 
         if(!positiveFee(request)){
-            TransferResponse response = new TransferResponse(TransferResponse.Status.NO_FEE);
+            TransferResponse response = new TransferResponse(TransferResponse.Status.NO_FEE, requestHash);
             return response;
         }
 
-        String requestHash = "";
-        try {
-            requestHash = RSAEncryption.digest(request.toJson()); // TODo
-        } catch (NoSuchAlgorithmException e) {
-            throw new HDSSException(ErrorMessage.HashingError);
-        }
+        LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received valid transfer request: {1}", config.getId(), request.toJson()));
 
         Transaction transaction = new Transaction(request);
         blockBuilderService.addTransaction(transaction);
@@ -221,30 +218,30 @@ public class LedgerService implements ILedgerService {
 
     }
 
-    private boolean existsTarget(BalanceRequest request, ProcessConfig[] clientProcesses){
-        for (ProcessConfig process : clientProcesses) {
-            if(process.getId().equals(request.getTarget())){
-                return true;
-            }
-        }    
-        return false;
+    private boolean existsTarget(BalanceRequest request, Set<String> clientIds){
+        return clientIds.contains(request.getTarget());
     }
 
     @Override
     public BalanceResponse balance(BalanceRequest request) {
 
-        ProcessConfig[] clientProcesses = clientService.getConfigs();
+        Map<String, ProcessConfig> clientProcesses = clientService.getConfigs();
 
-        if(!existsTarget(request,clientProcesses)){  
-            BalanceResponse response = new BalanceResponse(request.getTarget());
-            response.setStatus(BalanceResponse.Status.ACCOUNT_NOT_FOUND);
+        String requestHash = "";
+        try {
+            requestHash = RSAEncryption.digest(request.toJson());
+        } catch (NoSuchAlgorithmException e) {
+            throw new HDSSException(ErrorMessage.HashingError);
+        }
+
+        if(!existsTarget(request, clientProcesses.keySet())){  
+            BalanceResponse response = new BalanceResponse(ClientResponse.Status.ACCOUNT_NOT_FOUND, requestHash, request.getTarget());
             return response;
         }
 
-        BalanceResponse response = new BalanceResponse(request.getTarget());
+        BalanceResponse response = new BalanceResponse(ClientResponse.Status.OK, requestHash, request.getTarget());
         try {
             response.setBalance(getBalance(request.getTarget()));
-            response.setStatus(BalanceResponse.Status.OK);
         } catch (AccountNotFoundException e) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), request.getTarget()));
             response.setStatus(BalanceResponse.Status.ACCOUNT_NOT_FOUND);

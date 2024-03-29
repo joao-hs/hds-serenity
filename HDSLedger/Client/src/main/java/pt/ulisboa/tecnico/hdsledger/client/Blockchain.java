@@ -24,6 +24,7 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
+import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse.Status;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
@@ -221,7 +222,7 @@ public class Blockchain {
             return;
         }
         Pair<String, ArrayList<String>> proofOfInclusion = majorityResponse.getProofOfInclusion();
-        if (!MerkleTree.verifyProof(
+        if (majorityResponse.getGeneralStatus() == ClientResponse.GeneralStatus.SUBMITTED && !MerkleTree.verifyProof(
             request.toJson(), // ! assuming the full leaves are just transfer requests in json
             proofOfInclusion.getLeft(), // merkle root
             proofOfInclusion.getRight() // merkle sibling path to root
@@ -232,7 +233,7 @@ public class Blockchain {
             return;
         }
         // 2. Was the block agreed on consensus?
-        if (!verifyProofOfConsensus(majorityResponse.getProofOfConsensus())) {
+        if (majorityResponse.getGeneralStatus() == ClientResponse.GeneralStatus.SUBMITTED && !verifyProofOfConsensus(majorityResponse.getProofOfConsensus())) {
             
             System.out.println(MessageFormat.format("{0} - Transfer of {1} to {2} failed verification of consensus",
                 clientConfig.getId(), request.getAmount(), request.getReceiver()));
@@ -245,8 +246,8 @@ public class Blockchain {
          * we can conclude that the block is in the blockchain
          */
         
-        System.out.println(MessageFormat.format("#### Transfer of {1} to {2} was {3}",
-            clientConfig.getId(), request.getAmount(), request.getReceiver(), majorityResponse.getStatus().name()));
+        System.out.println(MessageFormat.format("#### Transfer of {1} to {2} was {3} - {4}",
+            clientConfig.getId(), request.getAmount(), request.getReceiver(), majorityResponse.getGeneralStatus().name(), majorityResponse.getStatus().name()));
         
         pendingTransfers.remove(majorityResponse.getClientRequestHash());
     }
