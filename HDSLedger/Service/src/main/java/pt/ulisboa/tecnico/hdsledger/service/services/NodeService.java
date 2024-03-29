@@ -162,6 +162,9 @@ public class NodeService implements UDPService, INodeService {
                 if (progressIndicator.isFrozen()) {
                     LOGGER.log(Level.INFO, MessageFormat.format("{0} - Progress is frozen for consensus instance {1}, broadcasting round change",
                         config.getId(), consensusInstance));
+                    prepareMessages.getMessages(consensusInstance, instanceInfo.get(consensusInstance).getCurrentRound()).entrySet().forEach(entry -> {
+                        this.link.broadcastPort(entry.getValue());
+                    });
                     instanceInfo.get(consensusInstance).incrementRound();
                     stopTimeout.set(true);
                     progressIndicator.resetProgress();
