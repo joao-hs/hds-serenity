@@ -171,6 +171,11 @@ public class LedgerService implements ILedgerService {
             return response;
         }
 
+        if (!positiveAmount(request)){
+            TransferResponse response = new TransferResponse(TransferResponse.Status.NO_AMOUNT);
+            return response;
+        }
+
         if(!positiveFee(request)){
             TransferResponse response = new TransferResponse(TransferResponse.Status.NO_FEE);
             return response;
