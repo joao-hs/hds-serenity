@@ -2,9 +2,6 @@ package pt.ulisboa.tecnico.hdsledger.service.services;
 
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeSet;
 import java.util.logging.Level;
 
 import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
@@ -33,8 +30,6 @@ public class ClientService implements UDPService, IClientService {
 
     private final LinkWrapper link;
 
-    private final Map<String, Map<String, TreeSet<Integer>>> freshness = new HashMap<>();
-
     public ClientService(LinkWrapper link, ProcessConfig config, ProcessConfig[] clientsConfigs) {
         this.link = link;
         this.config = config;
@@ -46,21 +41,9 @@ public class ClientService implements UDPService, IClientService {
     }
 
     private boolean isFresh(String issuer, TransferRequest request) {
-        freshness.putIfAbsent(issuer, new HashMap<>());
-        Map<String, TreeSet<Integer>> clientFreshness = freshness.get(issuer);
         String currentTimestamp = Timestamp.getCurrentTimestamp();
-
-        // check if the request was sent recently
-        if (!Timestamp.sameWindow(currentTimestamp, request.getTimestamp())) {
-            return false;
-        }
-        // remove old entries
-        if (!clientFreshness.containsKey(request.getTimestamp())) {
-            clientFreshness.clear();
-        }
-        clientFreshness.putIfAbsent(request.getTimestamp(), new TreeSet<>());
-        return clientFreshness.get(request.getTimestamp()).add(request.getNonce());
         
+        return Timestamp.sameWindow(currentTimestamp, request.getTimestamp());
     }
 
     private synchronized void uponTransfer(String issuer, TransferRequest request) {

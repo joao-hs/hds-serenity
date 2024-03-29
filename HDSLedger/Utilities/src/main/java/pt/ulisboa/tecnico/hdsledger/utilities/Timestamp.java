@@ -1,18 +1,17 @@
 package pt.ulisboa.tecnico.hdsledger.utilities;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public abstract class Timestamp {
     private static final int secondWindow = 2 * 60; // two minutes
+    private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+
     public static String getCurrentTimestamp() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Date now = new Date();
         long time = now.getTime();
-        long time2 = time - time % (secondWindow * 1000);
-        now.setTime(time2);
-
-        return sdf.format(now);
+        return sdf.format(time);
     }
 
     public static boolean sameWindow(String timestamp1, String timestamp2) {
@@ -20,6 +19,16 @@ public abstract class Timestamp {
         if (timestamp1 == null || timestamp2 == null) {
             return false;
         }
-        return timestamp1.equals(timestamp2);
+
+        Date d1, d2;
+        try {
+            d1 = sdf.parse(timestamp1);
+            d2 = sdf.parse(timestamp2);
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return Math.abs(d1.getTime() -d2.getTime()) <= secondWindow * 1000;
     }
 }

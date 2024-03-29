@@ -28,7 +28,7 @@ public class Block {
 
     // Block Body - needs `Expose` annotation to be serialized
     @Expose
-    private SortedSet<Transaction> transactions = new TreeSet<>(new Comparator<String>() {
+    private SortedSet<Transaction> transactions = new TreeSet<>(new Comparator<Transaction>() {
         @Override
         public int compare(Transaction t1, Transaction t2) {
             TransferRequest tr1 = t1.getTransferRequest();
@@ -54,8 +54,7 @@ public class Block {
                 accountId, // receiver
                 100, // ! initial amount
                 0, // fee
-                "2024-02-25 16:59:07", // random timestamp
-                0 // nonce
+                "2024-02-25 16:59:07" // random timestamp
             );
 
             transactions.add(new Transaction(ownRequest));

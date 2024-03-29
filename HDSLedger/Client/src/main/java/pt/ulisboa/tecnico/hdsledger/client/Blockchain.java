@@ -12,14 +12,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.google.gson.Gson;
 
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.BlockchainRequestBuilder;
@@ -42,7 +38,6 @@ public class Blockchain {
     private Map<String, ProcessConfig> nodesConfig;
     private Integer N_nodes;
     private Integer F_nodes;
-    private Map<String, TreeSet<Integer>> freshness = new TreeMap<>();
     private Map<String, List<ClientResponse>> responses = new HashMap<>();
     private Map<String, TransferRequest> pendingTransfers = new HashMap<>();
     private LinkWrapper link;
@@ -54,21 +49,6 @@ public class Blockchain {
             Collectors.toMap(ProcessConfig::getId, c -> c));
         this.F_nodes = Math.floorDiv(N_nodes - 1, 3);
         this.link = new RegularLinkWrapper(clientConfig, clientConfig.getPort(), nodesConfig, BlockchainResponse.class);
-    }
-
-    private Pair<String, Integer> getFreshness() {
-        Integer nonce = new Random().nextInt();
-        String currentTimestamp = Timestamp.getCurrentTimestamp();
-        // remove old entries
-        if (!freshness.keySet().stream().anyMatch(timestamp -> !Timestamp.sameWindow(timestamp, currentTimestamp))) {
-            freshness.clear();
-        }
-        freshness.putIfAbsent(currentTimestamp, new TreeSet<Integer>());
-        // make sure the nonce is actually a nonce
-        while (!freshness.get(currentTimestamp).add(nonce)) {
-            nonce = new Random().nextInt();
-        }
-        return Pair.of(currentTimestamp, nonce);
     }
 
     private ClientResponse responseMajority(String requestHash) {
@@ -177,15 +157,14 @@ public class Blockchain {
     public void transfer(String receiver, int amount, int fee) {
         System.out.println(
                 MessageFormat.format("{0} - Requesting Transfer {1} to {2}", clientConfig.getId(), amount, receiver));
-        Pair<String, Integer> freshness = getFreshness();
+        String freshness = Timestamp.getCurrentTimestamp();
         String requestHash = "";
         TransferRequest request = new TransferRequest(
             clientConfig.getId(), 
             receiver,
             amount,
             fee,
-            freshness.getLeft(), // timestamp
-            freshness.getRight() // nonce
+            freshness // timestamp
         );
         request.sign(clientConfig.getId(), clientConfig.getPrivKeyPath());
         
