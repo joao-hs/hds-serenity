@@ -13,7 +13,6 @@ public class InstanceInfo {
     private int currentRound = 1;
     private int preparedRound = -1;
     private String preparedSerializedValue;
-    private String preparedValueHash;
     private CommitMessage commitMessage;
     private String serializedValue;
     private String valueHash;

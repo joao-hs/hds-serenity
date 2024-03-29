@@ -3,7 +3,6 @@ package pt.ulisboa.tecnico.hdsledger.service.models;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;

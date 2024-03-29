@@ -6,7 +6,6 @@ import pt.ulisboa.tecnico.hdsledger.communication.BlockchainResponse;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -24,7 +23,6 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
-import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse.Status;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
@@ -36,7 +34,6 @@ import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;
 
 public class Blockchain {
     private ProcessConfig clientConfig;
-    private Map<String, ProcessConfig> nodesConfig;
     private Integer N_nodes;
     private Integer F_nodes;
     private Map<String, List<ClientResponse>> responses = new HashMap<>();
@@ -46,8 +43,6 @@ public class Blockchain {
     public Blockchain(ProcessConfig clientConfig, ProcessConfig[] nodesConfig) {
         this.clientConfig = clientConfig;
         this.N_nodes = nodesConfig.length;
-        this.nodesConfig = Arrays.stream(nodesConfig).collect(
-            Collectors.toMap(ProcessConfig::getId, c -> c));
         this.F_nodes = Math.floorDiv(N_nodes - 1, 3);
         this.link = new RegularLinkWrapper(clientConfig, clientConfig.getPort(), nodesConfig, BlockchainResponse.class);
     }

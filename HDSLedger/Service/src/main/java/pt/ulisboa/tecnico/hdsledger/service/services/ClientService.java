@@ -3,9 +3,9 @@ package pt.ulisboa.tecnico.hdsledger.service.services;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import pt.ulisboa.tecnico.hdsledger.communication.BlockchainRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
@@ -38,10 +38,7 @@ public class ClientService implements UDPService, IClientService {
         this.link = link;
         this.config = config;
         this.clientsConfigs = Arrays.stream(clientsConfigs).collect(
-            HashMap::new,
-            (m, v) -> m.put(v.getId(), v),
-            HashMap::putAll
-        );
+            Collectors.toMap(ProcessConfig::getId, c -> c));
     }
 
     public ProcessConfig getConfig() {
