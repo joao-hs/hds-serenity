@@ -77,8 +77,10 @@ public class BlockBuilderService implements IBlockBuilderService {
     public boolean removeTransaction(Transaction transaction) {
         TransferRequest request = transaction.getTransferRequest();
         synchronized (transactionPool) {
-            availableFee -= request.getFee();
-            return transactionPool.remove(transaction);
+            Boolean removed = transactionPool.remove(transaction);
+            if (removed)
+                availableFee -= request.getFee();
+            return removed;
         }
     }
 

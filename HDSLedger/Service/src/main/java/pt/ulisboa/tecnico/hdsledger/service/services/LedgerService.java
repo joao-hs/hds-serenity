@@ -1,6 +1,5 @@
 package pt.ulisboa.tecnico.hdsledger.service.services;
 
-import java.security.NoSuchAlgorithmException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,11 +24,8 @@ import pt.ulisboa.tecnico.hdsledger.service.models.Block;
 import pt.ulisboa.tecnico.hdsledger.service.models.Transaction;
 import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
-import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.HDSSException;
 import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
-import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
 public class LedgerService implements ILedgerService {
     private static final CustomLogger LOGGER = new CustomLogger(LedgerService.class.getName());
@@ -38,7 +34,11 @@ public class LedgerService implements ILedgerService {
 
     private ConcurrentHashMap<String, Account> accounts = new ConcurrentHashMap<>();
 
-    private Map<String, Block> pendingBlocks = new ConcurrentHashMap<>();
+    private Map<String, Block> merkleRootBlockMap = new ConcurrentHashMap<>(); // block's merkle root hash -> Block object 
+
+    private Map<String, String> reverseMerkleTree = new ConcurrentHashMap<>(); // transaction hash -> block's merkle root hash
+
+    private Map<String, ClientResponse.Status> clientResponsesStatus = new ConcurrentHashMap<>(); // client request hash -> response status
 
     private ArrayList<Block> blockchain = new ArrayList<>();
 
@@ -151,12 +151,7 @@ public class LedgerService implements ILedgerService {
     public TransferResponse transfer(TransferRequest request) {
         Map<String, ProcessConfig> clientProcesses = clientService.getConfigs();
 
-        String requestHash = "";
-        try {
-            requestHash = RSAEncryption.digest(request.toJson());
-        } catch (NoSuchAlgorithmException e) {
-            throw new HDSSException(ErrorMessage.HashingError);
-        }
+        String requestHash = request.digest();
 
         if (!existsSender(request, clientProcesses.keySet())){  
             TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_SOURCE, requestHash);
@@ -186,25 +181,35 @@ public class LedgerService implements ILedgerService {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received valid transfer request: {1}", config.getId(), request.toJson()));
 
         Transaction transaction = new Transaction(request);
-        blockBuilderService.addTransaction(transaction);
+        if (!blockBuilderService.addTransaction(transaction)) {
+            TransferResponse response = new TransferResponse(TransferResponse.Status.DENIED, requestHash);
+            return response;
+        }
+
         Block block = blockBuilderService.buildBlock();
         if (block != null) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Block built: {1}", config.getId(), block.toJson()));
-            pendingBlocks.put(block.getMerkleRootHash(), block);
+            merkleRootBlockMap.put(block.getMerkleRootHash(), block);
             nodeService.reachConsensus(block.getSerializedBlock());
         }
 
-        // TODO: Wait for transaction to be added to the blockchain
-        try {
-            Thread.sleep(3500); // TODO: remove this
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } 
-
-        // TODO: Get result of the transaction
+        synchronized (transaction) {
+            // wait for transaction to be included in the blockchain
+            try {
+                transaction.wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        String merkleRoot = reverseMerkleTree.get(transaction.digest()); // get the merkle root block hash where the transaction is included
+        if (merkleRoot == null) {
+            TransferResponse response = new TransferResponse(TransferResponse.Status.DENIED, requestHash);
+            return response;
+        }
+        block = merkleRootBlockMap.get(merkleRoot);
 
         TransferResponse response = new TransferResponse(
-            TransferResponse.Status.OK,
+            clientResponsesStatus.get(requestHash),
             requestHash,
             Pair.of(block.getMerkleRootHash(), block.getProofOfInclusion(transaction)), // proof of belonging in a block
             block.getProofOfConsensus() // proof of the same block being agreed
@@ -227,12 +232,7 @@ public class LedgerService implements ILedgerService {
 
         Map<String, ProcessConfig> clientProcesses = clientService.getConfigs();
 
-        String requestHash = "";
-        try {
-            requestHash = RSAEncryption.digest(request.toJson());
-        } catch (NoSuchAlgorithmException e) {
-            throw new HDSSException(ErrorMessage.HashingError);
-        }
+        String requestHash = request.digest();
 
         if(!existsTarget(request, clientProcesses.keySet())){  
             BalanceResponse response = new BalanceResponse(ClientResponse.Status.ACCOUNT_NOT_FOUND, requestHash, request.getTarget());
@@ -256,27 +256,45 @@ public class LedgerService implements ILedgerService {
         Block block = new Gson().fromJson(serializedValue, Block.class);
         block.setMerkleTree();
         String blockKey = block.getMerkleRootHash();
-        if (pendingBlocks.containsKey(blockKey)) {
+        if (merkleRootBlockMap.containsKey(blockKey)) {
             // Block is already created
-            block = pendingBlocks.get(blockKey);
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Block already created: {1}", config.getId(), blockKey));
+            block = merkleRootBlockMap.get(blockKey);
+        } else {
+            // Block is new
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Block not created yet: {1}", config.getId(), blockKey));
+            merkleRootBlockMap.put(blockKey, block);
         }
         block.addAllCommitMessages(commitMessages); // no need to verify since we trust ourselves
+
         // TODO: Validate block (ledger-logic)
         // if not valid, return false
 
         for (Transaction transaction : block.getTransactions()) {
-            TransferRequest request = transaction.getTransferRequest();
-            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Processing transaction: {1}", config.getId(), request.toJson()));
-            try {
-                // TODO remove same transaction from transaction pool
-                performTransfer(request.getSender(), request.getReceiver(), request.getAmount());
-            } catch (AccountNotFoundException e) {
-                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), request.getSender()));
-            } catch (InsufficientFundsException e) {
-                LOGGER.log(Level.INFO, MessageFormat.format("{0} - Insufficient funds in account {1}", config.getId(), request.getSender()));
+            synchronized (transaction) {
+                reverseMerkleTree.put(transaction.digest(), blockKey);
+                TransferRequest request = transaction.getTransferRequest();
+                String requestHash = request.digest();
+                try {
+                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - Processing transaction: {1}", config.getId(), request.toJson()));
+                    blockBuilderService.removeTransaction(transaction);
+                    performTransfer(request.getSender(), request.getReceiver(), request.getAmount());
+                    clientResponsesStatus.put(requestHash, ClientResponse.Status.OK);
+                } catch (AccountNotFoundException e) {
+                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), request.getSender()));
+                    clientResponsesStatus.put(requestHash, ClientResponse.Status.ACCOUNT_NOT_FOUND);
+                } catch (InsufficientFundsException e) {
+                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - Insufficient funds in account {1}", config.getId(), request.getSender()));
+                    clientResponsesStatus.put(requestHash, ClientResponse.Status.INSUFFICIENT_FUNDS);
+                }
+                transaction.notify();
             }
         }
-        // TODO: actually chain together nodes
-        blockchain.add(block);
+
+        synchronized (blockchain) {
+            block.setPreviousBlock(blockchain.get(blockchain.size() - 1));
+            block.setChainHash();
+            blockchain.add(block);
+        }
     }
 }

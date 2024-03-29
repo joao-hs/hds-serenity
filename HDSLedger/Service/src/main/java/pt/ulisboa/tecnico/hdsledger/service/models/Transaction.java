@@ -1,10 +1,13 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
+import java.security.NoSuchAlgorithmException;
+
 import com.google.gson.Gson;
 import com.google.gson.annotations.Expose;
 
 import pt.ulisboa.tecnico.hdsledger.communication.client.ClientRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
+import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
 public class Transaction implements Comparable<Transaction> {
     @Expose
@@ -20,6 +23,15 @@ public class Transaction implements Comparable<Transaction> {
 
     public String getSerializedRequest(){
         return serializedRequest;
+    }
+
+    public String digest() {
+        try {
+            return RSAEncryption.digest(this.toString());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override
