@@ -105,10 +105,10 @@ public class LedgerService implements ILedgerService {
     }
 
     public void performTransfer(String senderId, String receiverId, int amount) throws AccountNotFoundException, InsufficientFundsException {
-        if (!accounts.contains(senderId)) {
+        if (!accounts.containsKey(senderId)) {
             throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", senderId));
         }
-        if (!accounts.contains(receiverId)) {
+        if (!accounts.containsKey(receiverId)) {
             throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", receiverId));
         }
 
