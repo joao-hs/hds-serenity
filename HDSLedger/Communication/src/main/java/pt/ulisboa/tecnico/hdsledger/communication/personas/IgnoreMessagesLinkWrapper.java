@@ -13,11 +13,6 @@ public class IgnoreMessagesLinkWrapper extends LinkWrapper {
         super(self, port, nodes, messageClass);
     }
 
-    public IgnoreMessagesLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass,
-        boolean activateLogs, int baseSleepTime) {
-        super(self, port, nodes, messageClass, activateLogs, baseSleepTime);
-    }
-
     public void unreliableSend(InetAddress hostname, int port, Message data) {
         return;
     }

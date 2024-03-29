@@ -18,18 +18,15 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
 import pt.ulisboa.tecnico.hdsledger.communication.builder.BlockchainRequestBuilder;
+import pt.ulisboa.tecnico.hdsledger.communication.builder.LinkWrapperBuilder;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.ClientResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
-import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
-import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
-import pt.ulisboa.tecnico.hdsledger.utilities.HDSSException;
 import pt.ulisboa.tecnico.hdsledger.utilities.MerkleTree;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
-import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;
 
 public class Blockchain {
@@ -44,7 +41,7 @@ public class Blockchain {
         this.clientConfig = clientConfig;
         this.N_nodes = nodesConfig.length;
         this.F_nodes = Math.floorDiv(N_nodes - 1, 3);
-        this.link = new RegularLinkWrapper(clientConfig, clientConfig.getPort(), nodesConfig, BlockchainResponse.class);
+        this.link = new LinkWrapperBuilder(clientConfig, clientConfig.getPort(), nodesConfig, BlockchainResponse.class).build();
     }
 
     private ClientResponse responseMajority(String requestHash) {
@@ -134,12 +131,7 @@ public class Blockchain {
         BalanceRequest request = new BalanceRequest(target);
         request.sign(clientConfig.getId(), clientConfig.getPrivKeyPath());
 
-        String requestHash = "";
-        try {
-            requestHash = RSAEncryption.digest(request.toJson());
-        } catch (Exception e) {
-            throw new HDSSException(ErrorMessage.HashingError);
-        }
+        String requestHash = request.digest();
 
         responses.put(requestHash, new LinkedList<>());
 
@@ -164,11 +156,7 @@ public class Blockchain {
         );
         request.sign(clientConfig.getId(), clientConfig.getPrivKeyPath());
         
-        try {
-            requestHash = RSAEncryption.digest(request.toJson());
-        } catch (Exception e) {
-            throw new HDSSException(ErrorMessage.HashingError);
-        }
+        requestHash = request.digest();
         
         pendingTransfers.put(requestHash, request);
         responses.put(requestHash, new LinkedList<>());

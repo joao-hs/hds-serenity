@@ -9,27 +9,16 @@ import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
 public class WrongValueLinkWrapper extends LinkWrapper {
 
-    String wrong_message = "Wrong message";
+    private String wrongMessage = "Wrong message";
     
     public WrongValueLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass) {
         super(self, port, nodes, messageClass);
-    }
-
-    public WrongValueLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass,
-        boolean activateLogs, int baseSleepTime) {
-        super(self, port, nodes, messageClass, activateLogs, baseSleepTime);
-    }
-
-    public WrongValueLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass, 
-            boolean activateLogs, int baseSleepTime, String wrong_message) {
-        
-        super(self, port, nodes, messageClass, activateLogs, baseSleepTime);
-        this.wrong_message = wrong_message;
+        this.wrongMessage = this.additionalInfo.getOrDefault("wrongMessage", this.wrongMessage);
     }
 
     public void unreliableSend(InetAddress hostname, int port, Message data) {
         ConsensusMessage message = (ConsensusMessage) data;
-        message.setMessage(this.wrong_message);
+        message.setMessage(this.wrongMessage);
         this.getLink().unreliableSend(hostname, port, message, true);
     }
 

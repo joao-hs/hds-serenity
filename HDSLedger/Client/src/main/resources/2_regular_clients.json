@@ -4,13 +4,15 @@
         "hostname": "localhost",
         "port": 3101,
         "privKeyPath": "../Keys/client1.priv",
-        "pubKeyPath": "../Keys/client1.pub"
+        "pubKeyPath": "../Keys/client1.pub",
+        "persona": "REGULAR"
     },
-    {   
+    {
         "id": "C2",
         "hostname": "localhost",
         "port": 3102,
         "privKeyPath": "../Keys/client2.priv",
-        "pubKeyPath": "../Keys/client2.pub"
+        "pubKeyPath": "../Keys/client2.pub",
+        "persona": "REGULAR"
     }
 ]

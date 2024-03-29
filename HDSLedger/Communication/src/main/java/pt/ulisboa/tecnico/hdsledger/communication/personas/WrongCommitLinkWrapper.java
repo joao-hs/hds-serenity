@@ -10,10 +10,5 @@ public class WrongCommitLinkWrapper extends LinkWrapper {
             Class<? extends Message> messageClass) {
         super(self, port, nodes, messageClass);
     }
-
-    public WrongCommitLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes,
-            Class<? extends Message> messageClass, boolean activateLogs, int baseSleepTime) {
-        super(self, port, nodes, messageClass, activateLogs, baseSleepTime);
-    }
-    
+ 
 }

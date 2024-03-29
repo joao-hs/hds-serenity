@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.hdsledger.utilities;
 
+import java.util.Map;
+
 import com.google.gson.annotations.SerializedName;
 
 public class ProcessConfig {
@@ -41,6 +43,8 @@ public class ProcessConfig {
     private float minFeeAmountRatio = 0; // minimum fee amount ratio, (e.g., if 0.1, fee needs to be 10% or more of the amount)
 
     private Persona persona;
+
+    private Map<String, String> additionalInfo;
 
     public int getPort() {
         return port;
@@ -84,6 +88,10 @@ public class ProcessConfig {
 
     public Persona getPersona() {
         return persona;
+    }
+
+    public Map<String, String> getAdditionalInfo() {
+        return additionalInfo;
     }
 
 }

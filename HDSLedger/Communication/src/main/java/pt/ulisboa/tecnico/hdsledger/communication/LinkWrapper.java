@@ -3,6 +3,7 @@ package pt.ulisboa.tecnico.hdsledger.communication;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Map;
 
 import pt.ulisboa.tecnico.hdsledger.communication.interfaces.LinkInterface;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
@@ -11,14 +12,11 @@ public abstract class LinkWrapper implements LinkInterface {
 
     private Link link;
 
+    protected Map<String, String> additionalInfo;
+
     public LinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass) {
         this.link = new Link(this, self, port, nodes, messageClass);
-    }
-
-    public LinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass,
-            boolean activateLogs, int baseSleepTime) {
-        
-        this.link = new Link(this, self, port, nodes, messageClass, activateLogs, baseSleepTime);
+        this.additionalInfo = self.getAdditionalInfo();
     }
 
     public Link getLink() {

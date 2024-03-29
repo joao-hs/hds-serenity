@@ -10,11 +10,6 @@ public class RoundChangeLinkWrapper extends LinkWrapper {
         super(self, port, nodes, messageClass);
     }
 
-    public RoundChangeLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass,
-        boolean activateLogs, int baseSleepTime) {
-        super(self, port, nodes, messageClass, activateLogs, baseSleepTime);
-    }
-
     public void sendPort(String nodeId, Message data) {
         data.setType(Message.Type.ROUND_CHANGE);
         this.getLink().sendPort(nodeId, data);

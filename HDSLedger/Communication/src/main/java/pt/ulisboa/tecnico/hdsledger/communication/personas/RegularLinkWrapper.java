@@ -10,10 +10,5 @@ public class RegularLinkWrapper extends LinkWrapper {
         super(self, port, nodes, messageClass);
     }
 
-    public RegularLinkWrapper(ProcessConfig self, int port, ProcessConfig[] nodes, Class<? extends Message> messageClass,
-            boolean activateLogs, int baseSleepTime) {
-        super(self, port, nodes, messageClass, activateLogs, baseSleepTime);
-    }
-
     // All methods have the default implementation from LinkWrapper: pass the call to the link object.
 }
