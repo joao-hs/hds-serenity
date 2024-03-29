@@ -73,4 +73,14 @@ public abstract class SharableMessage implements Signable {
             throw new HDSSException(ErrorMessage.SigningMessageError);
         }
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof SharableMessage) {
+            SharableMessage other = (SharableMessage) obj;
+            return this.getCreator().equals(other.getCreator())
+                && this.getSignature().equals(other.getSignature());
+        }
+        return false;
+    }
 }

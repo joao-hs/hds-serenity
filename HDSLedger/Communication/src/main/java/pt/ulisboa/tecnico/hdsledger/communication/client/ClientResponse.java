@@ -13,6 +13,7 @@ public abstract class ClientResponse implements ClientMessageInterface {
         // General
         OK,
         // TransferResponse
+        DENIED,
         INSUFFICIENT_FUNDS,
         NO_AMOUNT,
         NO_FEE,

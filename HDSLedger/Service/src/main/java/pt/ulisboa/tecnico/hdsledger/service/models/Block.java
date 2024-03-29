@@ -72,6 +72,13 @@ public class Block {
         proofOfConsensus.addAll(commitMessages);
     }
 
+    public void setPreviousBlock(Block previousBlock) {
+        if (this.previousBlock != null) {
+            return;
+        }
+        this.previousBlock = previousBlock;
+    }
+
     public void setChainHash() {
         if (chainHash != null) {
             return;
