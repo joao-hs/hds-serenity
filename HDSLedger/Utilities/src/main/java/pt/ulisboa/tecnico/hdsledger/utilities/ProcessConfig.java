@@ -1,14 +1,22 @@
 package pt.ulisboa.tecnico.hdsledger.utilities;
 
+import com.google.gson.annotations.SerializedName;
+
 public class ProcessConfig {
     public ProcessConfig() {}
 
     public enum Persona {
+        @SerializedName("REGULAR")
         REGULAR,
+        @SerializedName("SLOW")
         SLOW,
+        @SerializedName("DROP")
         DROP,
+        @SerializedName("WRONG_VALUE")
         WRONG_VALUE,
+        @SerializedName("WRONG_COMMIT")
         WRONG_COMMIT,
+        @SerializedName("ROUND_CHANGE")
         ROUND_CHANGE
     }
 
