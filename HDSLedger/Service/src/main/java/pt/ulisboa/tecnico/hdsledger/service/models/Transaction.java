@@ -6,7 +6,7 @@ import com.google.gson.annotations.Expose;
 import pt.ulisboa.tecnico.hdsledger.communication.client.ClientRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 
-public class Transaction {
+public class Transaction implements Comparable<Transaction> {
     @Expose
     private String serializedRequest;
 
@@ -34,6 +34,16 @@ public class Transaction {
             return getSerializedRequest().equals(other.getSerializedRequest());
         }
         return false;
+    }
+
+    @Override
+    public int compareTo(Transaction t2) {
+        if (this.equals(t2)) {
+            return 0;
+        }
+        TransferRequest tr1 = this.getTransferRequest();
+        TransferRequest tr2 = t2.getTransferRequest();
+        return tr1.getTimestamp().compareTo(tr2.getTimestamp());
     }
 
 }

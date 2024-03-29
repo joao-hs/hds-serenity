@@ -28,19 +28,7 @@ public class Block {
 
     // Block Body - needs `Expose` annotation to be serialized
     @Expose
-    private SortedSet<Transaction> transactions = new TreeSet<>(new Comparator<Transaction>() {
-        @Override
-        public int compare(Transaction t1, Transaction t2) {
-            TransferRequest tr1 = t1.getTransferRequest();
-            TransferRequest tr2 = t2.getTransferRequest();
-            int comp = tr1.getTimestamp().compareTo(tr2.getTimestamp());
-            if (comp == 0 && !t1.equals(t2)){
-                comp = -1;
-            }
-            return comp;
-        }
-    });
-
+    private SortedSet<Transaction> transactions = new TreeSet<>();
 
     public Block() {
         // empty block
