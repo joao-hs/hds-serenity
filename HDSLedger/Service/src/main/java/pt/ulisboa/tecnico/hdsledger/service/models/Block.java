@@ -3,9 +3,12 @@ package pt.ulisboa.tecnico.hdsledger.service.models;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -24,9 +27,19 @@ public class Block {
     private MerkleTree merkleTree = null;
 
     // Block Body - needs `Expose` annotation to be serialized
-    // TODO: change to ordered set
     @Expose
-    private Set<Transaction> transactions = new HashSet<>();
+    private SortedSet<Transaction> transactions = new TreeSet<>(new Comparator<String>() {
+        @Override
+        public int compare(Transaction t1, Transaction t2) {
+            TransferRequest tr1 = t1.getTransferRequest();
+            TransferRequest tr2 = t2.getTransferRequest();
+            int comp = tr1.getTimestamp().compareTo(tr2.getTimestamp());
+            if (comp == 0 && !t1.equals(t2)){
+                comp = -1;
+            }
+            return comp;
+        }
+    });
 
 
     public Block() {

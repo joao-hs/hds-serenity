@@ -18,9 +18,22 @@ public class Transaction {
         return new Gson().fromJson(serializedRequest, TransferRequest.class);
     }
 
+    public String getSerializedRequest(){
+        return serializedRequest;
+    }
+
     @Override
     public String toString() {
         return serializedRequest.toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Transaction) {
+            Transaction other = (Transaction) obj;
+            return getSerializedRequest().equals(other.getSerializedRequest());
+        }
+        return false;
     }
 
 }
