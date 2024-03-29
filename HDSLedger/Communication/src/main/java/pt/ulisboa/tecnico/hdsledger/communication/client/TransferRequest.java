@@ -8,15 +8,13 @@ public class TransferRequest extends ClientRequest {
 
     // this is not an idempotent request, so it MUST be resilient to replay attacks
     private String timestamp;
-    private Integer nonce;
 
-    public TransferRequest(String sender, String receiver, int amount, int fee, String timestamp, Integer nonce) {
+    public TransferRequest(String sender, String receiver, int amount, int fee, String timestamp) {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
         this.fee = fee;
         this.timestamp = timestamp;
-        this.nonce = nonce;
     }
 
     public String getSender() {
@@ -57,14 +55,6 @@ public class TransferRequest extends ClientRequest {
 
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
-    }
-
-    public Integer getNonce() {
-        return nonce;
-    }
-
-    public void setNonce(Integer nonce) {
-        this.nonce = nonce;
     }
 
 }
