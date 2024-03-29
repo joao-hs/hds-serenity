@@ -1,11 +1,16 @@
 package pt.ulisboa.tecnico.hdsledger.communication.client;
 
+import java.util.Objects;
+
 public class BalanceResponse extends ClientResponse {
 
     private String target;
     private int balance;
 
-    public BalanceResponse(String target) {
+    public BalanceResponse(Status status, String clientRequestHash, String target) {
+        this.setGeneralStatus(GeneralStatus.NOT_SUBMITTED); // to consensus
+        this.setStatus(status);
+        this.setClientRequestHash(clientRequestHash);
         this.target = target;
     }
 
@@ -27,14 +32,18 @@ public class BalanceResponse extends ClientResponse {
 
     @Override
     public int hashCode() {
-        return getStatus().hashCode() + target.hashCode() + balance;
+        return Objects.hash(getGeneralStatus(), getStatus(), getClientRequestHash(), target, balance);
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof BalanceResponse) {
             BalanceResponse other = (BalanceResponse) obj;
-            return getStatus().equals(other.getStatus()) && target.equals(other.target) && balance == other.balance;
+            return getGeneralStatus().equals(other.getGeneralStatus())
+                && getStatus().equals(other.getStatus()) 
+                && getClientRequestHash().equals(other.getClientRequestHash()) 
+                && target.equals(other.target) 
+                && balance == other.balance;
         }
         return false;
     }
