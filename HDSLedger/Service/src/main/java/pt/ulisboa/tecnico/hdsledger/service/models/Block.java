@@ -122,4 +122,13 @@ public class Block {
     public String toJson() {
         return new Gson().toJson(this);
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Block) {
+            Block other = (Block) obj;
+            return this.getMerkleRootHash().equals(other.getMerkleRootHash());
+        }
+        return false;
+    }
 }

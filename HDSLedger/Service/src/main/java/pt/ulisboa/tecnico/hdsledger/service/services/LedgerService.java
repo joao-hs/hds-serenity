@@ -79,6 +79,7 @@ public class LedgerService implements ILedgerService {
         }
         // Create the genesis block
         Block genesisBlock = new Block(accounts.keys());
+        genesisBlock.setMerkleTree();
         blockchain.add(genesisBlock);
 
         nodeService.listen();
@@ -267,8 +268,11 @@ public class LedgerService implements ILedgerService {
         }
         block.addAllCommitMessages(commitMessages); // no need to verify since we trust ourselves
 
-        // TODO: Validate block (ledger-logic)
-        // if not valid, return false
+        for (Block bl : this.blockchain) {
+            if (block.equals(bl)) {
+                return;
+            }
+        }
 
         for (Transaction transaction : block.getTransactions()) {
             synchronized (transaction) {
