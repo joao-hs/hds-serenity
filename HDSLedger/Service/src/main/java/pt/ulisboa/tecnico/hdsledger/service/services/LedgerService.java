@@ -31,7 +31,7 @@ import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 public class LedgerService implements ILedgerService {
     private static final CustomLogger LOGGER = new CustomLogger(LedgerService.class.getName());
 
-    private static LedgerService instance = null;
+    private LedgerServiceWrapper self;
 
     private ConcurrentHashMap<String, Account> clientAccounts = new ConcurrentHashMap<>();
 
@@ -46,34 +46,30 @@ public class LedgerService implements ILedgerService {
     private ArrayList<Block> blockchain = new ArrayList<>();
 
     private ProcessConfig config = null;
-    private ClientService clientService = null;
-    private NodeService nodeService = null;
+    private ClientServiceWrapper clientService = null;
+    private NodeServiceWrapper nodeService = null;
     private BlockBuilderService blockBuilderService = null;
 
-    private LedgerService() {
-    }
-
-    public static LedgerService getInstance() {
-        if (instance == null) {
-            instance = new LedgerService();
-        }
-        return instance;
-    }
-
-    public void setConfig(ProcessConfig config) {
-        this.config = config;
-    }
-
-    public void setClientService(ClientService clientService) {
+    public LedgerService(LedgerServiceWrapper self, ProcessConfig nodeConfig,ProcessConfig[] clientConfigs
+    ,ClientServiceWrapper clientService,NodeServiceWrapper nodeService,BlockBuilderService blockBuilderService) {
+        this.self = self;
+        this.config = nodeConfig;
         this.clientService = clientService;
-    }
-
-    public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+        this.blockBuilderService = blockBuilderService;
+        for (ProcessConfig clientConfig : clientConfigs) {
+            accounts.put(clientConfig.getId(), new Account(clientConfig.getId()));
+        }
+        this.setLedgerOnClientService();
+        this.setLedgerOnNodeService();
     }
 
-    public void setBlockBuilderService(BlockBuilderService blockBuilderService) {
-        this.blockBuilderService = blockBuilderService;
+    public void setLedgerOnClientService(){
+        this.clientService.setLedgerService(self);
+    }
+
+    public void setLedgerOnNodeService(){
+        this.nodeService.setLedgerService(self);
     }
 
     public void init() throws Exception {
@@ -141,23 +137,23 @@ public class LedgerService implements ILedgerService {
 
     }
 
-    private boolean existsSender(TransferRequest request, Set<String> clientIds){
+    public boolean existsSender(TransferRequest request, Set<String> clientIds){
         return clientIds.contains(request.getSender());
     }
 
-    private boolean existsReceiver(TransferRequest request, Set<String> clientIds){
+    public boolean existsReceiver(TransferRequest request, Set<String> clientIds){
         return clientIds.contains(request.getReceiver());
     }
 
-    private boolean diffRecvSend(TransferRequest request){
+    public boolean diffRecvSend(TransferRequest request){
         return !request.getSender().equals(request.getReceiver());
     }
 
-    private boolean positiveAmount(TransferRequest request){
+    public boolean positiveAmount(TransferRequest request){
         return request.getAmount() > 0;
     }
 
-    private boolean positiveFee(TransferRequest request){
+    public boolean positiveFee(TransferRequest request){
         return request.getFee() > 0;
     }
 

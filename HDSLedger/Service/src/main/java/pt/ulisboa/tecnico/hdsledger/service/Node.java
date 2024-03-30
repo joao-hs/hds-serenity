@@ -9,11 +9,8 @@ import pt.ulisboa.tecnico.hdsledger.service.builders.LedgerServiceWrapperBuilder
 import pt.ulisboa.tecnico.hdsledger.service.builders.NodeServiceWrapperBuilder;
 import pt.ulisboa.tecnico.hdsledger.service.models.BlockValidator;
 import pt.ulisboa.tecnico.hdsledger.service.services.BlockBuilderService;
-import pt.ulisboa.tecnico.hdsledger.service.services.ClientService;
 import pt.ulisboa.tecnico.hdsledger.service.services.ClientServiceWrapper;
 import pt.ulisboa.tecnico.hdsledger.service.services.LedgerServiceWrapper;
-import pt.ulisboa.tecnico.hdsledger.service.services.LedgerService;
-import pt.ulisboa.tecnico.hdsledger.service.services.NodeService;
 import pt.ulisboa.tecnico.hdsledger.service.services.NodeServiceWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
@@ -65,13 +62,15 @@ public class Node {
             // Services that implement listen from UDPService
             NodeServiceWrapper nodeService = new NodeServiceWrapperBuilder(linkToNodes, nodeConfig, nodeConfigs, blockValidator).build();
             ClientServiceWrapper clientService = new ClientServiceWrapperBuilder(linkToClients, nodeConfig, clientConfigs).build();
-
+            LedgerServiceWrapper instance = null;
             // Other services
             BlockBuilderService blockBuilderService = new BlockBuilderService(nodeConfig);
 
             // Start ledger
             LedgerServiceWrapper ledger = new LedgerServiceWrapperBuilder(null, nodeConfig, clientConfigs, nodeConfigs, clientService,
                 nodeService, blockBuilderService).build();
+            ledger.init();
+            
 
 
         } catch (Exception e) {
