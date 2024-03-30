@@ -18,6 +18,7 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.ClientRequest;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.IClientService;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.UDPService;
+import pt.ulisboa.tecnico.hdsledger.service.services.LedgerServiceWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;
@@ -30,11 +31,14 @@ public class ClientService implements UDPService, IClientService {
 
     private final ProcessConfig config;
 
-    private final LedgerService ledger = LedgerService.getInstance();
+    private final LedgerServiceWrapper ledger = LedgerServiceWrapper.getInstance();
 
     private final LinkWrapper link;
 
-    public ClientService(LinkWrapper link, ProcessConfig config, ProcessConfig[] clientsConfigs) {
+    private final ClientServiceWrapper clientService;
+
+    public ClientService(ClientServiceWrapper clientService ,LinkWrapper link, ProcessConfig config, ProcessConfig[] clientsConfigs) {
+        this.clientService = clientService;
         this.link = link;
         this.config = config;
         this.clientsConfigs = Arrays.stream(clientsConfigs).collect(
@@ -49,47 +53,47 @@ public class ClientService implements UDPService, IClientService {
         return clientsConfigs;
     }
 
-    private boolean isFresh(String issuer, TransferRequest request) {
+    public boolean isFresh(String issuer, TransferRequest request) {
         String currentTimestamp = Timestamp.getCurrentTimestamp();
         
         return Timestamp.sameWindow(currentTimestamp, request.getTimestamp());
     }
 
-    private boolean hasValidSignature(ClientRequest request) {
+    public boolean hasValidSignature(ClientRequest request) {
         return request.verifySignature(clientsConfigs.get(request.getCreator()).getPubKeyPath());
     }
 
-    private boolean existsClient(String issuer) {
+    public boolean existsClient(String issuer) {
         return clientsConfigs.containsKey(issuer);
     }
 
-    private boolean isSenderValid(String issuer, TransferRequest request) {
+    public boolean isSenderValid(String issuer, TransferRequest request) {
         return request.getSender().equals(issuer);
     }
 
-    private synchronized void uponTransfer(String issuer, TransferRequest request) {
+    public synchronized void uponTransfer(String issuer, TransferRequest request) {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received TRANSFER request from {1}",
             config.getId(), issuer));
 
-        if (!existsClient(issuer)) {
+        if (!this.clientService.existsClient(issuer)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received request from non-existing client named {1}",
                 config.getId(), issuer));
             return;
         }
 
-        if (!hasValidSignature(request)) {
+        if (!this.clientService.hasValidSignature(request)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received invalid signature request from {1}",
                 config.getId(), issuer));
             return;
         }
 
-        if (!isSenderValid(issuer, request)) {
+        if (!this.clientService.isSenderValid(issuer, request)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received invalid sender-issuer pair request from {1}",
                 config.getId(), issuer));
             return;
         }
 
-        if (!isFresh(issuer, request)) {
+        if (!this.clientService.isFresh(issuer, request)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received non-fresh request from {1}",
                 config.getId(), issuer));
             return;
@@ -102,17 +106,17 @@ public class ClientService implements UDPService, IClientService {
         );
     }
 
-    private void uponBalance(String issuer, BalanceRequest request) {
+    public void uponBalance(String issuer, BalanceRequest request) {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received BALANCE request from {1}",
             config.getId(), issuer));
 
-        if (!existsClient(issuer)) {
+        if (!this.clientService.existsClient(issuer)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received request from non-existing client named {1}",
                 config.getId(), issuer));
             return;
         }
 
-        if (!hasValidSignature(request)) {
+        if (!this.clientService.hasValidSignature(request)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received invalid signature request from {1}",
                 config.getId(), issuer));
             return;
@@ -137,9 +141,9 @@ public class ClientService implements UDPService, IClientService {
                         new Thread(() -> {
                             switch (request.getType()) {
                                 case TRANSFER ->
-                                    uponTransfer(request.getSenderId(), ((BlockchainRequest) request).deserializeTransferRequest());
+                                    this.clientService.uponTransfer(request.getSenderId(), ((BlockchainRequest) request).deserializeTransferRequest());
                                 case BALANCE ->
-                                    uponBalance(request.getSenderId(), ((BlockchainRequest) request).deserializeBalanceRequest());
+                                    this.clientService.uponBalance(request.getSenderId(), ((BlockchainRequest) request).deserializeBalanceRequest());
                                 case IGNORE ->
                                     LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received IGNORE message from {1}",
                                         config.getId(), request.getSenderId()));
