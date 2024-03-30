@@ -1,14 +1,41 @@
 package pt.ulisboa.tecnico.hdsledger.service.interfaces;
 
 import java.util.Collection;
+import java.util.Set;
 
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
+import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;
+import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
+import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
 public interface ILedgerService {
+
+    public void setLedgerOnClientService();
+
+    public void setLedgerOnNodeService();
+
+    public void init() throws Exception;
+
+    public void addAllAccounts(ProcessConfig[] clientConfigs);
+
+    public int getBalance(String id) throws AccountNotFoundException;
+
+    public void performTransfer(String senderId, String receiverId, int amount) throws AccountNotFoundException, InsufficientFundsException;
+
+    public boolean existsSender(TransferRequest request, Set<String> clientIds);
+
+    public boolean existsReceiver(TransferRequest request, Set<String> clientIds);
+
+    public boolean diffRecvSend(TransferRequest request);
+
+    public boolean positiveAmount(TransferRequest request);
+
+    public boolean positiveFee(TransferRequest request);
+
     /**
      * Transfer money from one account to another
      * Blocks until the transfer is completed

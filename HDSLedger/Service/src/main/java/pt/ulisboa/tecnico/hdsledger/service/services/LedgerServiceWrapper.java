@@ -2,6 +2,7 @@ package pt.ulisboa.tecnico.hdsledger.service.services;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.client.BalanceResponse;
@@ -13,47 +14,23 @@ import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;
 import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
-public class LedgerServiceWrapper implements ILedgerService {
+public abstract class LedgerServiceWrapper implements ILedgerService {
 
     private LedgerService ledgerService;
 
     protected Map<String, String> additionalInfo;
 
-    private static LedgerServiceWrapper instance = null;
-
-    public LedgerServiceWrapper(LedgerService instance, ProcessConfig nodeConfig,ProcessConfig[] clientConfigs
-    ,ClientService clientService,NodeService nodeService,BlockBuilderService blockBuilderService) throws Exception {
-        this.ledgerService.getInstance();
-        this.ledgerService.setConfig(nodeConfig);
-        this.ledgerService.addAllAccounts(clientConfigs);
-        this.ledgerService.setClientService(clientService);
-        this.ledgerService.setNodeService(nodeService);
-        this.ledgerService.setBlockBuilderService(blockBuilderService);
-        this.ledgerService.init();
-        this.additionalInfo = nodeConfig.getAdditionalInfo();
+    public LedgerServiceWrapper(LedgerServiceWrapper instance, ProcessConfig nodeConfig,ProcessConfig[] clientConfigs
+    ,ClientServiceWrapper clientService,NodeServiceWrapper nodeService,BlockBuilderService blockBuilderService) throws Exception {
+        this.ledgerService = new LedgerService(instance,nodeConfig,clientConfigs,clientService,nodeService,blockBuilderService);
     }
 
-    public static LedgerService getInstance() {
-        if (instance == null) {
-            instance = new LedgerService();
-        }
-        return instance;
+    public void setLedgerOnClientService(){
+        this.ledgerService.setLedgerOnClientService();
     }
 
-    public void setConfig(ProcessConfig config) {
-        this.ledgerService.setConfig(config);
-    }
-
-    public void setClientService(ClientService clientService) {
-        this.ledgerService.setClientService(clientService);
-    }
-
-    public void setNodeService(NodeService nodeService) {
-        this.ledgerService.setNodeService(nodeService);
-    }
-
-    public void setBlockBuilderService(BlockBuilderService blockBuilderService) {
-        this.ledgerService.setBlockBuilderService(blockBuilderService);
+    public void setLedgerOnNodeService(){
+        this.ledgerService.setLedgerOnNodeService();
     }
 
     public void init() throws Exception {
@@ -70,6 +47,26 @@ public class LedgerServiceWrapper implements ILedgerService {
 
     public void performTransfer(String senderId, String receiverId, int amount) throws AccountNotFoundException, InsufficientFundsException {
         this.ledgerService.performTransfer(senderId, receiverId, amount);
+    }
+
+    public boolean existsSender(TransferRequest request, Set<String> clientIds){
+        return this.ledgerService.existsSender(request, clientIds);
+    }
+
+    public boolean existsReceiver(TransferRequest request, Set<String> clientIds){
+        return this.ledgerService.existsReceiver(request, clientIds);
+    }
+
+    public boolean diffRecvSend(TransferRequest request){
+        return this.ledgerService.diffRecvSend(request);
+    }
+
+    public boolean positiveAmount(TransferRequest request){
+        return this.ledgerService.positiveAmount(request);
+    }
+
+    public boolean positiveFee(TransferRequest request){
+        return this.ledgerService.positiveFee(request);
     }
 
     @Override

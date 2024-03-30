@@ -38,7 +38,7 @@ import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
 public class NodeService implements UDPService, INodeService {
 
-    private static final CustomLogger LOGGER = new CustomLogger(NodeService.class.getName());
+    private static final CustomLogger LOGGER = new CustomLogger(NodeServiceWrapper.class.getName());
     // Nodes configurations
     private final Map<String, ProcessConfig> nodesConfig;
     // Value Validator
@@ -50,7 +50,7 @@ public class NodeService implements UDPService, INodeService {
     // Link to communicate with nodes
     private final LinkWrapper link;
 
-    private final LedgerService ledger = LedgerService.getInstance();
+    private LedgerServiceWrapper ledger = null;
 
     // Consensus instance -> Round -> List of prepare messages
     private final MessageBucket prepareMessages;
@@ -94,6 +94,10 @@ public class NodeService implements UDPService, INodeService {
         return this.config;
     }
 
+    public void setLedgerService(LedgerServiceWrapper ledger){
+        this.ledger = ledger;
+    }
+
     public Map<String, ProcessConfig> getConfigs(){
         return this.nodesConfig;
     }
@@ -102,11 +106,11 @@ public class NodeService implements UDPService, INodeService {
         return this.consensusInstance.get();
     }
 
-    private boolean isLeader(String id, int consensusInstance) {
+    public boolean isLeader(String id, int consensusInstance) {
         return getLeader(consensusInstance).getId().equals(id);
     }
 
-    private ProcessConfig getLeader(int consensusInstance) {
+    public ProcessConfig getLeader(int consensusInstance) {
         Integer round = this.instanceInfo.get(consensusInstance).getCurrentRound();
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Leader of consensus instance {1} is {2}", config.getId(), consensusInstance, (round % nodesConfig.size())));
         return nodesConfig.entrySet().stream()
@@ -116,7 +120,7 @@ public class NodeService implements UDPService, INodeService {
             .orElse(null); // Should never happen
     }
 
-    private boolean isConsensusValueValid(String serializedValue) {
+    public boolean isConsensusValueValid(String serializedValue) {
         if (serializedValue == null) {
             return false;
         }
@@ -240,7 +244,7 @@ public class NodeService implements UDPService, INodeService {
         }
     }
 
-    private Optional<Pair<Integer, String>> highestPrepared(List<RoundChangeMessage> quorumRoundChange) {
+    public Optional<Pair<Integer, String>> highestPrepared(List<RoundChangeMessage> quorumRoundChange) {
         Optional<RoundChangeMessage> roundChangeMessage = quorumRoundChange.stream()
             .filter(rc -> rc.getLastPreparedRound() != null)
             .max(Comparator.comparing(rc -> rc.getLastPreparedRound()));
@@ -250,7 +254,7 @@ public class NodeService implements UDPService, INodeService {
         return Optional.of(Pair.of(roundChangeMessage.get().getLastPreparedRound(), roundChangeMessage.get().getLastPreparedSerializedValue()));
     }
 
-    private boolean justifyPrePrepare(int instanceId, int round) {
+    public boolean justifyPrePrepare(int instanceId, int round) {
         return (round == 1) ||
                 roundChangeMessages.getRoundChangeMessages(instanceId, round).stream()
                         .allMatch(roundChange ->
@@ -259,7 +263,7 @@ public class NodeService implements UDPService, INodeService {
                         .getRight().equals(prepareMessages.hasValidPrepareQuorum(config.getId(), instanceId, round).orElse(null));
     }
 
-    private boolean justifyRoundChange(int instanceId, InstanceInfo instanceInfo, List<RoundChangeMessage> quorumRoundChange) {
+    public boolean justifyRoundChange(int instanceId, InstanceInfo instanceInfo, List<RoundChangeMessage> quorumRoundChange) {
         int round = instanceInfo.getCurrentRound();
         return roundChangeMessages.getRoundChangeMessages(instanceId, round).stream()
                 .allMatch(roundChange ->

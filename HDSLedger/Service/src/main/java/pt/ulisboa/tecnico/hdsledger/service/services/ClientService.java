@@ -18,20 +18,19 @@ import pt.ulisboa.tecnico.hdsledger.communication.client.TransferResponse;
 import pt.ulisboa.tecnico.hdsledger.communication.client.ClientRequest;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.IClientService;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.UDPService;
-import pt.ulisboa.tecnico.hdsledger.service.services.LedgerServiceWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 import pt.ulisboa.tecnico.hdsledger.utilities.Timestamp;
 
 public class ClientService implements UDPService, IClientService {
     
-    private static final CustomLogger LOGGER = new CustomLogger(ClientService.class.getName());
+    private static final CustomLogger LOGGER = new CustomLogger(ClientServiceWrapper.class.getName());
 
     private final Map<String, ProcessConfig> clientsConfigs;
 
     private final ProcessConfig config;
 
-    private final LedgerServiceWrapper ledger = LedgerServiceWrapper.getInstance();
+    private LedgerServiceWrapper ledger = null;
 
     private final LinkWrapper link;
 
@@ -47,6 +46,10 @@ public class ClientService implements UDPService, IClientService {
 
     public ProcessConfig getConfig() {
         return config;
+    }
+
+    public void setLedgerService(LedgerServiceWrapper ledger){
+        this.ledger = ledger;
     }
 
     public Map<String, ProcessConfig> getConfigs(){

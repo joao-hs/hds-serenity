@@ -11,7 +11,7 @@ import pt.ulisboa.tecnico.hdsledger.service.interfaces.UDPService;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
 
-public class ClientServiceWrapper implements UDPService, IClientService{
+public abstract class ClientServiceWrapper implements UDPService, IClientService{
 
     private ClientService clientService;
 
@@ -24,6 +24,10 @@ public class ClientServiceWrapper implements UDPService, IClientService{
 
     public ProcessConfig getConfig() {
         return this.clientService.getConfig();
+    }
+
+    public void setLedgerService(LedgerServiceWrapper ledger){
+        this.clientService.setLedgerService(ledger);
     }
 
     public Map<String, ProcessConfig> getConfigs(){
