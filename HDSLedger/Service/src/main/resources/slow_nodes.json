@@ -6,7 +6,10 @@
         "clientPort": 3011,
         "privKeyPath": "../Keys/node1.priv",
         "pubKeyPath": "../Keys/node1.pub",
-        "persona": "SLOW"
+        "persona": "SLOW",
+        "additionalInfo":{
+            "slowDownTime":"5000"
+        }
     },
     {
         "id": "2",
@@ -15,7 +18,10 @@
         "clientPort": 3012,
         "privKeyPath": "../Keys/node2.priv",
         "pubKeyPath": "../Keys/node2.pub",
-        "persona": "SLOW"
+        "persona": "SLOW",
+        "additionalInfo":{
+            "slowDownTime":"5000"
+        }
     },
     {
         "id": "3",
@@ -24,7 +30,10 @@
         "clientPort": 3013,
         "privKeyPath": "../Keys/node3.priv",
         "pubKeyPath": "../Keys/node3.pub",
-        "persona": "SLOW"
+        "persona": "SLOW",
+        "additionalInfo":{
+            "slowDownTime":"5000"
+        }
     },
     {
         "id": "4",
@@ -33,6 +42,9 @@
         "clientPort": 3014,
         "privKeyPath": "../Keys/node4.priv",
         "pubKeyPath": "../Keys/node4.pub",
-        "persona": "SLOW"
+        "persona": "SLOW",
+        "additionalInfo":{
+            "slowDownTime":"5000"
+        }
     }
 ]
