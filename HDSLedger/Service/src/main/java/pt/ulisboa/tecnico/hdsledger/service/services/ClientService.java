@@ -30,7 +30,7 @@ public class ClientService implements UDPService, IClientService {
 
     private final ProcessConfig config;
 
-    private LedgerServiceWrapper ledger = null;
+    private LedgerServiceWrapper ledger;
 
     private final LinkWrapper link;
 

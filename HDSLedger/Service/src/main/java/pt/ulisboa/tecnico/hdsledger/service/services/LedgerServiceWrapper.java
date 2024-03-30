@@ -20,9 +20,11 @@ public abstract class LedgerServiceWrapper implements ILedgerService {
 
     protected Map<String, String> additionalInfo;
 
-    public LedgerServiceWrapper(LedgerServiceWrapper instance, ProcessConfig nodeConfig,ProcessConfig[] clientConfigs
+    public LedgerServiceWrapper(ProcessConfig nodeConfig,ProcessConfig[] clientConfigs
     ,ClientServiceWrapper clientService,NodeServiceWrapper nodeService,BlockBuilderService blockBuilderService) throws Exception {
-        this.ledgerService = new LedgerService(instance,nodeConfig,clientConfigs,clientService,nodeService,blockBuilderService);
+        this.ledgerService = new LedgerService(this,nodeConfig,clientConfigs,clientService,nodeService,blockBuilderService);
+        this.additionalInfo = nodeConfig.getAdditionalInfo();
+
     }
 
     public void setLedgerOnClientService(){
