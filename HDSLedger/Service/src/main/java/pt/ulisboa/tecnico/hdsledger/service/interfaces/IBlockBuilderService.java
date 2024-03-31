@@ -16,7 +16,7 @@ public interface IBlockBuilderService {
      * The block will be built with the transactions in the pool
      * @return true if the transaction was added, false otherwise
      */
-    public boolean addTransaction(Transaction transaction);
+    public boolean addTransaction(Transaction transaction, double currentBalance);
 
     /*
      * Removes a transaction from the transaction pool
@@ -27,10 +27,15 @@ public interface IBlockBuilderService {
     /*
      * Sets the filters for the transactions that will be added to the block
      */
-    public void setTransactionFilters(int minFee, int maxFee, int feeThreshold, float minAmountFeeRation);
+    public void setTransactionFilters(double minFee, double maxFee, double feeThreshold, double maxBalanceFeeMargin, double maxBalanceAmountMargin);
 
     /*
      * @return if the transaction is acceptable by this node
      */
-    public boolean isTransactionValid(Transaction transaction);
+    public boolean isTransactionAcceptable(Transaction transaction);
+
+    /*
+     * @return if the transaction is risky for this node
+     */
+    public boolean isTransactionRisky(Transaction transaction, double currentBalance);
 }
