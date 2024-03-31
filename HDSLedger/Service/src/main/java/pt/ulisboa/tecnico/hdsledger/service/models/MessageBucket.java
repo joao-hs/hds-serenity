@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
+import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import com.google.gson.Gson;
@@ -52,10 +54,20 @@ public class MessageBucket{
     public Optional<String> hasValidPrepareQuorum(String nodeId, int instance, int round) {
         // Create mapping of value to frequency
         HashMap<String, Integer> frequency = new HashMap<>();
-        bucket.get(instance).get(round).values().forEach((message) -> {
+        if (!bucket.containsKey(instance)) {
+            return Optional.empty();
+        }
+        Map<String, ConsensusMessage> roundMessages = bucket.get(instance).get(round);
+        if (roundMessages == null) {
+            return Optional.empty();
+        }
+        roundMessages.values().forEach((message) -> {
             PrepareMessage prepareMessage = message.deserializePrepareMessage();
             String serializedHashValue = prepareMessage.getSerializedHashValue();
             frequency.put(serializedHashValue, frequency.getOrDefault(serializedHashValue, 0) + 1);
+        });
+        frequency.entrySet().forEach((entry) -> {
+            LOGGER.log(Level.INFO, MessageFormat.format("Frequency: {0}->{1}", entry.getKey(), entry.getValue()));
         });
 
         // Only one value (if any, thus the optional) will have a frequency
@@ -70,7 +82,11 @@ public class MessageBucket{
     public Optional<String> hasValidCommitQuorum(String nodeId, int instance, int round) {
         // Create mapping of value to frequency
         HashMap<String, Integer> frequency = new HashMap<>();
-        bucket.get(instance).get(round).values().forEach((message) -> {
+        Map<String, ConsensusMessage> roundMessages = bucket.get(instance).get(round);
+        if (roundMessages == null) {
+            return Optional.empty();
+        }
+        roundMessages.values().forEach((message) -> {
             CommitMessage commitMessage = message.deserializeCommitMessage();
             String serializedValue = commitMessage.getSerializedHashValue();
             frequency.put(serializedValue, frequency.getOrDefault(serializedValue, 0) + 1);
@@ -86,7 +102,12 @@ public class MessageBucket{
     }
 
     public boolean hasValidRoundChangeQuorum(String nodeId, int instance, int round) {
-        return bucket.get(instance).get(round).size() >= 2 * f + 1;
+        Map<String, ConsensusMessage> roundMessages = bucket.get(instance).get(round);
+        if (roundMessages == null) {
+            return false;
+        }
+        LOGGER.log(Level.INFO, MessageFormat.format("Round change current quorum size: {0}", roundMessages.size()));
+        return roundMessages.size() >= 2 * f + 1;
     }
 
     /*
@@ -99,8 +120,8 @@ public class MessageBucket{
      */
     public Optional<RoundChangeMessage> hasValidRoundChangeSet(String nodeId, int instance, int round) {
         // 1. Count the number of round change messages with the same instance and higher round
-        
-        Stream<ConsensusMessage> validRoundChangeMessages = bucket.get(instance).get(round).values()
+        Map<String, ConsensusMessage> roundMessages = bucket.get(instance).get(round);
+        Stream<ConsensusMessage> validRoundChangeMessages = roundMessages.values()
             .stream()
             .filter((message) -> message.getConsensusInstance() == instance)
             .filter((message) -> message.getRound() > round);
@@ -135,13 +156,21 @@ public class MessageBucket{
     }
 
     public List<RoundChangeMessage> getRoundChangeMessages(int instance, int round) {
+        if (!bucket.containsKey(instance) || !bucket.get(instance).containsKey(round)) {
+            return Collections.emptyList();
+        }
         Collection<ConsensusMessage> allMessages = bucket.get(instance).get(round).values();
         if (allMessages.isEmpty()) {
+            LOGGER.log(Level.INFO, MessageFormat.format("No round change messages for instance {0} round {1}", instance, round));
             return Collections.emptyList();
         }
         return allMessages.stream()
             .filter((message) -> message.getType().equals(Message.Type.ROUND_CHANGE))
             .map((message) -> message.deserializeRoundChangeMessage())
+            .map((message) -> {
+                LOGGER.log(Level.INFO, MessageFormat.format("ROUND_CHANGE<{0},{1},{2},{3},{4}>", instance, round, message.getCreator(), message.getLastPreparedRound(), message.getLastPreparedSerializedHashValue()));
+                return message;
+            })
             .toList();
     }
 

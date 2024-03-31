@@ -30,7 +30,6 @@ public class ProposeArbitraryNodeServiceWrapper extends NodeServiceWrapper {
 
     public ProposeArbitraryNodeServiceWrapper(LinkWrapper link, ProcessConfig config, ProcessConfig[] nodesConfig, ValueValidator validator) {
         super(link, config, nodesConfig, validator);
-        System.out.println("ProposeArbitraryNodeServiceWrapper");
     }
 
     private String fabricateValue() {
@@ -56,7 +55,6 @@ public class ProposeArbitraryNodeServiceWrapper extends NodeServiceWrapper {
 
     @Override
     public void startConsensus(String serializedValue) {
-        System.out.println("ProposeArbitraryNodeServiceWrapper.startConsensus");
         tries += 1;
         switch (this.tries) {
             case 1 -> {

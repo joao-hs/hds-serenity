@@ -11,16 +11,16 @@ import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 public class InstanceInfo {
 
     private int currentRound = 1;
-    private int preparedRound = -1;
+    private Integer preparedRound = null;
     private String preparedSerializedHashValue;
     private CommitMessage commitMessage;
+    private String mySerializedValue;
     private String serializedValue;
     private String valueHash;
-    private int committedRound = -1;
+    private Integer committedRound = null;
 
     public InstanceInfo(String serializedValue) {
-        this.serializedValue = serializedValue;
-        this.setValueHash();
+        this.mySerializedValue = serializedValue;
     }
 
     public InstanceInfo(int currentRound, String serializedValue, boolean isHash) {
@@ -46,11 +46,11 @@ public class InstanceInfo {
         currentRound++;
     }
 
-    public int getPreparedRound() {
+    public Integer getPreparedRound() {
         return preparedRound;
     }
 
-    public void setPreparedRound(int preparedRound) {
+    public void setPreparedRound(Integer preparedRound) {
         this.preparedRound = preparedRound;
     }
 
@@ -60,6 +60,10 @@ public class InstanceInfo {
 
     public void setPreparedHashValue(String preparedValue) {
         this.preparedSerializedHashValue = preparedValue;
+    }
+
+    public String getMySerializedValue() {
+        return mySerializedValue;
     }
 
     public String getSerializedValue() {
@@ -82,11 +86,11 @@ public class InstanceInfo {
         this.serializedValue = value;
     }
 
-    public int getCommittedRound() {
+    public Integer getCommittedRound() {
         return committedRound;
     }
 
-    public void setCommittedRound(int committedRound) {
+    public void setCommittedRound(Integer committedRound) {
         this.committedRound = committedRound;
     }
 
