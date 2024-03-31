@@ -12,27 +12,6 @@ public class NodeServiceWrapperBuilder {
     public NodeServiceWrapperBuilder(LinkWrapper link, ProcessConfig config, ProcessConfig[] nodesConfig, ValueValidator validator) {
         switch (config.getPersona()) {
             // case REGULAR is the default
-            case SLOW:
-                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
-                break;
-            case DROP:
-                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
-                break;
-            case DEAF:
-                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
-                break;
-            case MUTE:
-                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
-                break;
-            case WRONG_VALUE:
-                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
-                break;
-            case WRONG_COMMIT:
-                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
-                break;
-            case ROUND_CHANGE:
-                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
-                break;
             default:
                 this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
                 break;

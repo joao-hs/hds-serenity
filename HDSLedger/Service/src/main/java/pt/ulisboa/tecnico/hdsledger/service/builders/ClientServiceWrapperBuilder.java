@@ -11,27 +11,6 @@ public class ClientServiceWrapperBuilder {
     public ClientServiceWrapperBuilder(LinkWrapper link, ProcessConfig config, ProcessConfig[] clientsConfigs) {
         switch (config.getPersona()) {
             // case REGULAR is the default
-            case SLOW:
-                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
-                break;
-            case DROP:
-                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
-                break;
-            case DEAF:
-                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
-                break;
-            case MUTE:
-                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
-                break;
-            case WRONG_VALUE:
-                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
-                break;
-            case WRONG_COMMIT:
-                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
-                break;
-            case ROUND_CHANGE:
-                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
-                break;
             default:
                 this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
                 break;
