@@ -117,6 +117,9 @@ public class MessageBucket{
     }
 
     public Map<String, ConsensusMessage> getMessages(int instance, int round) {
+        if (!bucket.containsKey(instance) || !bucket.get(instance).containsKey(round)) {
+            return Collections.emptyMap();
+        }
         return bucket.get(instance).get(round);
     }
 

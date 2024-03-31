@@ -1,4 +1,4 @@
-package pt.ulisboa.tecnico.hdsledger.service.personas;
+package pt.ulisboa.tecnico.hdsledger.service.personas.node;
 
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.service.interfaces.ValueValidator;

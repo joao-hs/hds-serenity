@@ -32,6 +32,9 @@ public class MerkleTree {
     private Node root = null;
 
     public MerkleTree(Collection<String> fullLeaves) {
+        if (fullLeaves.size() == 0) {
+            return;
+        }
         root = buildTree(fullLeaves);
     }
 

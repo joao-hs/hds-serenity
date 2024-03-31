@@ -50,7 +50,7 @@ public abstract class ClientServiceWrapper implements UDPService, IClientService
         return this.clientService.isSenderValid(issuer, request);
     }
 
-    public synchronized void uponTransfer(String issuer, TransferRequest request) {
+    public void uponTransfer(String issuer, TransferRequest request) {
         this.clientService.uponTransfer(issuer, request);
     }
 

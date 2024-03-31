@@ -1,4 +1,4 @@
-package pt.ulisboa.tecnico.hdsledger.service.personas;
+package pt.ulisboa.tecnico.hdsledger.service.personas.ledger;
 
 import pt.ulisboa.tecnico.hdsledger.service.services.BlockBuilderService;
 import pt.ulisboa.tecnico.hdsledger.service.services.ClientServiceWrapper;

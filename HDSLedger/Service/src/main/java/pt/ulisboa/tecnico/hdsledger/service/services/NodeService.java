@@ -47,6 +47,8 @@ public class NodeService implements UDPService, INodeService {
     // Current node is leader
     private final ProcessConfig config;
 
+    private final NodeServiceWrapper self;
+
     // Link to communicate with nodes
     private final LinkWrapper link;
 
@@ -75,7 +77,8 @@ public class NodeService implements UDPService, INodeService {
     // Valid consensus value
     private final Set<String> validConsensusValues = new HashSet<>();
 
-    public NodeService(LinkWrapper link, ProcessConfig config, ProcessConfig[] nodesConfig, ValueValidator validator) {
+    public NodeService(NodeServiceWrapper self, LinkWrapper link, ProcessConfig config, ProcessConfig[] nodesConfig, ValueValidator validator) {
+        this.self = self;
         this.link = link;
         this.config = config;
         this.nodesConfig = Arrays.stream(nodesConfig).collect(
@@ -107,7 +110,7 @@ public class NodeService implements UDPService, INodeService {
     }
 
     public boolean isLeader(String id, int consensusInstance) {
-        return getLeader(consensusInstance).getId().equals(id);
+        return this.self.getLeader(consensusInstance).getId().equals(id);
     }
 
     public ProcessConfig getLeader(int consensusInstance) {
@@ -166,6 +169,7 @@ public class NodeService implements UDPService, INodeService {
                 if (progressIndicator.isFrozen()) {
                     LOGGER.log(Level.INFO, MessageFormat.format("{0} - Progress is frozen for consensus instance {1}, broadcasting round change",
                         config.getId(), consensusInstance));
+                    
                     prepareMessages.getMessages(consensusInstance, instanceInfo.get(consensusInstance).getCurrentRound()).entrySet().forEach(entry -> {
                         this.link.broadcastPort(entry.getValue());
                     });
@@ -206,7 +210,7 @@ public class NodeService implements UDPService, INodeService {
      * @param inputValue Value to value agreed upon
      */
     public void startConsensus(String serializedValue) {
-        if (!isConsensusValueValid(serializedValue)) {
+        if (!this.self.isConsensusValueValid(serializedValue)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Invalid consensus value", config.getId()));
             return;
         }
@@ -228,7 +232,7 @@ public class NodeService implements UDPService, INodeService {
         this.progressIndicators.get(localConsensusInstance).registerProgress();
 
         // Thread to trigger round change through timeouts
-        Thread timer = new Thread(() -> startTimer(localConsensusInstance));
+        Thread timer = new Thread(() -> this.self.startTimer(localConsensusInstance));
         timers.put(localConsensusInstance, timer);
         timer.start();
         
@@ -237,7 +241,7 @@ public class NodeService implements UDPService, INodeService {
             InstanceInfo instance = this.instanceInfo.get(localConsensusInstance);
             LOGGER.log(Level.INFO,
                 MessageFormat.format("{0} - Node is leader, sending PRE-PREPARE message", config.getId()));
-            this.link.broadcastPort(this.createConsensusMessage(serializedValue, localConsensusInstance, instance.getCurrentRound()));
+            this.link.broadcastPort(this.self.createConsensusMessage(serializedValue, localConsensusInstance, instance.getCurrentRound()));
         } else {
             LOGGER.log(Level.INFO,
                     MessageFormat.format("{0} - Node is not leader, waiting for PRE-PREPARE message", config.getId()));
@@ -259,7 +263,7 @@ public class NodeService implements UDPService, INodeService {
                 roundChangeMessages.getRoundChangeMessages(instanceId, round).stream()
                         .allMatch(roundChange ->
                                 roundChange.getLastPreparedRound() == null && roundChange.getLastPreparedSerializedValue() == null) ||
-                highestPrepared(roundChangeMessages.getRoundChangeMessages(instanceId, round)).orElse(Pair.of(-1, ""))
+                this.self.highestPrepared(roundChangeMessages.getRoundChangeMessages(instanceId, round)).orElse(Pair.of(-1, ""))
                         .getRight().equals(prepareMessages.hasValidPrepareQuorum(config.getId(), instanceId, round).orElse(null));
     }
 
@@ -268,7 +272,7 @@ public class NodeService implements UDPService, INodeService {
         return roundChangeMessages.getRoundChangeMessages(instanceId, round).stream()
                 .allMatch(roundChange ->
                         roundChange.getLastPreparedRound() == null && roundChange.getLastPreparedSerializedValue() == null) ||
-                highestPrepared(roundChangeMessages.getRoundChangeMessages(instanceId, round)).orElse(Pair.of(-1, ""))
+                this.self.highestPrepared(roundChangeMessages.getRoundChangeMessages(instanceId, round)).orElse(Pair.of(-1, ""))
                         .getRight().equals(prepareMessages.hasValidPrepareQuorum(config.getId(), instanceId, round).orElse(null));
 
     }
@@ -301,15 +305,15 @@ public class NodeService implements UDPService, INodeService {
                         "{0} - Received PRE-PREPARE message from {1}, created by {2}: Consensus Instance {3}, Round {4}",
                         config.getId(), senderId, creatorId, consensusInstance, round));
 
-        if (!isConsensusValueValid(serializedValue)) {
+        if (!this.self.isConsensusValueValid(serializedValue)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Invalid consensus value", config.getId()));
             return;
         }
 
         // Verify if pre-prepare was sent by leader
-        if (!isLeader(creatorId, round) || !justifyPrePrepare(consensusInstance, round)) {
+        if (!isLeader(creatorId, round) || !this.self.justifyPrePrepare(consensusInstance, round)) {
             if (!isLeader(creatorId, round)) LOGGER.log(Level.INFO, MessageFormat.format("{0} - Not leader, ignoring PRE-PREPARE message", config.getId()));
-            if (!justifyPrePrepare(consensusInstance, round)) LOGGER.log(Level.INFO, MessageFormat.format("{0} - Not justified, ignoring PRE-PREPARE message", config.getId()));
+            if (!this.self.justifyPrePrepare(consensusInstance, round)) LOGGER.log(Level.INFO, MessageFormat.format("{0} - Not justified, ignoring PRE-PREPARE message", config.getId()));
             return;
         }
 
@@ -327,7 +331,7 @@ public class NodeService implements UDPService, INodeService {
                             config.getId(), consensusInstance, round));
         }
 
-        this.timers.putIfAbsent(consensusInstance, new Thread(() -> startTimer(consensusInstance)));
+        this.timers.putIfAbsent(consensusInstance, new Thread(() -> this.self.startTimer(consensusInstance)));
         this.stopTimeouts.get(consensusInstance).set(false);
         progressIndicators.get(consensusInstance).registerProgress();
 
@@ -371,7 +375,7 @@ public class NodeService implements UDPService, INodeService {
             return;
         }
 
-        if (!isConsensusValueValid(serializedValue)) {
+        if (!this.self.isConsensusValueValid(serializedValue)) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Invalid consensus value", config.getId()));
             return;
         }
@@ -461,7 +465,7 @@ public class NodeService implements UDPService, INodeService {
             return;
         }
 
-        if (!isConsensusValueValid(message.deserializeCommitMessage().getSerializedValue())) {
+        if (!this.self.isConsensusValueValid(message.deserializeCommitMessage().getSerializedValue())) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Invalid consensus value", config.getId()));
             return;
         }
@@ -548,7 +552,7 @@ public class NodeService implements UDPService, INodeService {
             return;
         }
 
-        if (!isConsensusValueValid(roundChangeMessage.getLastPreparedSerializedValue())) {
+        if (!this.self.isConsensusValueValid(roundChangeMessage.getLastPreparedSerializedValue())) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Invalid consensus value", config.getId()));
             return;
         }
@@ -601,9 +605,9 @@ public class NodeService implements UDPService, INodeService {
         List<RoundChangeMessage> roundChangeList = roundChangeMessages.getRoundChangeMessages(consensusInstance, round);
 
         if(roundChangeMessages.hasValidRoundChangeQuorum(config.getId(), consensusInstance, round) 
-            && isLeader(this.config.getId(), round) && justifyRoundChange(consensusInstance, instance, roundChangeList)){
+            && isLeader(this.config.getId(), round) && this.self.justifyRoundChange(consensusInstance, instance, roundChangeList)){
             
-            Optional<Pair<Integer, String>> highestPrepared = highestPrepared(roundChangeList);
+            Optional<Pair<Integer, String>> highestPrepared = this.self.highestPrepared(roundChangeList);
             
             serializedValue = highestPrepared.orElse(Pair.of((Integer) null, instance.getSerializedValue())).getRight();
             instance.setPreparedRound(highestPrepared.orElse(Pair.of((Integer) null, instance.getSerializedValue())).getLeft());
@@ -657,16 +661,16 @@ public class NodeService implements UDPService, INodeService {
                             switch (message.getType()) {
 
                                 case PRE_PREPARE ->
-                                    uponPrePrepare((ConsensusMessage) message);
+                                    this.self.uponPrePrepare((ConsensusMessage) message);
 
                                 case PREPARE ->
-                                    uponPrepare((ConsensusMessage) message);
+                                    this.self.uponPrepare((ConsensusMessage) message);
 
                                 case COMMIT ->
-                                    uponCommit((ConsensusMessage) message);
+                                    this.self.uponCommit((ConsensusMessage) message);
 
                                 case ROUND_CHANGE ->
-                                    uponRoundChangeRequest((ConsensusMessage) message);
+                                    this.self.uponRoundChangeRequest((ConsensusMessage) message);
 
                                 case ACK ->
                                     LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received ACK message from {1}",
@@ -698,7 +702,7 @@ public class NodeService implements UDPService, INodeService {
 
     @Override
     public void reachConsensus(String value) {
-        startConsensus(value);
+        this.self.startConsensus(value);
     }
 
 }

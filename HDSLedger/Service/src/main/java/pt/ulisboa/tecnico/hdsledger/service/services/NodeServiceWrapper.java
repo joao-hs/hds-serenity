@@ -17,12 +17,12 @@ import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
 public abstract class NodeServiceWrapper implements UDPService, INodeService {
 
-    private NodeService nodeService;
+    protected NodeService nodeService;
 
     protected Map<String, String> additionalInfo;
 
     public NodeServiceWrapper(LinkWrapper link, ProcessConfig config, ProcessConfig[] nodesConfig, ValueValidator validator) {
-        this.nodeService = new NodeService(link, config, nodesConfig, validator);
+        this.nodeService = new NodeService(this, link, config, nodesConfig, validator);
         this.additionalInfo = config.getAdditionalInfo();
     }
 

@@ -1,0 +1,58 @@
+[
+    {   
+        "id": "1",
+        "hostname": "localhost",
+        "port": 3001,
+        "clientPort": 3011,
+        "privKeyPath": "../Keys/node1.priv",
+        "pubKeyPath": "../Keys/node1.pub",
+        "persona": "ARBITRARY",
+        "minFee": 1,
+        "maxFee": 10,
+        "feeThreshold": 3,
+        "maxBalanceFeeMargin": 0.3,
+        "maxBalanceAmountMargin": 0.95
+    },
+    {
+        "id": "2",
+        "hostname": "localhost",
+        "port": 3002,
+        "clientPort": 3012,
+        "privKeyPath": "../Keys/node2.priv",
+        "pubKeyPath": "../Keys/node2.pub",
+        "persona": "REGULAR",
+        "minFee": 1,
+        "maxFee": 10,
+        "feeThreshold": 3,
+        "maxBalanceFeeMargin": 0.3,
+        "maxBalanceAmountMargin": 0.95
+    },
+    {
+        "id": "3",
+        "hostname": "localhost",
+        "port": 3003,
+        "clientPort": 3013,
+        "privKeyPath": "../Keys/node3.priv",
+        "pubKeyPath": "../Keys/node3.pub",
+        "persona": "REGULAR",
+        "minFee": 1,
+        "maxFee": 10,
+        "feeThreshold": 3,
+        "maxBalanceFeeMargin": 0.3,
+        "maxBalanceAmountMargin": 0.95
+    },
+    {
+        "id": "4",
+        "hostname": "localhost",
+        "port": 3004,
+        "clientPort": 3014,
+        "privKeyPath": "../Keys/node4.priv",
+        "pubKeyPath": "../Keys/node4.pub",
+        "persona": "REGULAR",
+        "minFee": 1,
+        "maxFee": 10,
+        "feeThreshold": 3,
+        "maxBalanceFeeMargin": 0.3,
+        "maxBalanceAmountMargin": 1.0
+    }
+]

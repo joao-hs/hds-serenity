@@ -74,7 +74,7 @@ public class ClientService implements UDPService, IClientService {
         return request.getSender().equals(issuer);
     }
 
-    public synchronized void uponTransfer(String issuer, TransferRequest request) {
+    public void uponTransfer(String issuer, TransferRequest request) {
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received TRANSFER request from {1}",
             config.getId(), issuer));
 

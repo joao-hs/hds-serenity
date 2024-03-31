@@ -50,6 +50,8 @@ public class Node {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Running at {1}:({2}:{3});",
                 nodeConfig.getId(), nodeConfig.getHostname(), nodeConfig.getPort(), nodeConfig.getClientPort()));
             
+            LOGGER.log(Level.INFO, MessageFormat.format("{0} - Persona: {1}", nodeConfig.getId(), nodeConfig.getPersona()));
+
             // Abstraction to send and receive messages
             LinkWrapper linkToNodes = new LinkWrapperBuilder(nodeConfig, nodeConfig.getPort(), nodeConfigs,
                 ConsensusMessage.class).build();

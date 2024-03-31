@@ -18,12 +18,8 @@ public class ProcessConfig {
         DEAF,
         @SerializedName("MUTE")
         MUTE,
-        @SerializedName("WRONG_VALUE")
-        WRONG_VALUE,
-        @SerializedName("WRONG_COMMIT")
-        WRONG_COMMIT,
-        @SerializedName("ROUND_CHANGE")
-        ROUND_CHANGE
+        @SerializedName("ARBITRARY")
+        ARBITRARY
     }
 
     private String hostname;
