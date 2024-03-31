@@ -7,9 +7,6 @@ import pt.ulisboa.tecnico.hdsledger.communication.personas.IgnoreMessagesLinkWra
 import pt.ulisboa.tecnico.hdsledger.communication.personas.MuteLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.SlowLinkWrapper;
-import pt.ulisboa.tecnico.hdsledger.communication.personas.WrongCommitLinkWrapper;
-import pt.ulisboa.tecnico.hdsledger.communication.personas.WrongValueLinkWrapper;
-import pt.ulisboa.tecnico.hdsledger.communication.personas.RoundChangeLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.utilities.ProcessConfig;
 
 public class LinkWrapperBuilder {
@@ -29,15 +26,6 @@ public class LinkWrapperBuilder {
                 break;
             case MUTE:
                 this.instance = new MuteLinkWrapper(self, port, nodes, messageClass);
-                break;
-            case WRONG_VALUE:
-                this.instance = new WrongValueLinkWrapper(self, port, nodes, messageClass);
-                break;
-            case WRONG_COMMIT:
-                this.instance = new WrongCommitLinkWrapper(self, port, nodes, messageClass);
-                break;
-            case ROUND_CHANGE:
-                this.instance = new RoundChangeLinkWrapper(self, port, nodes, messageClass);
                 break;
             default:
                 this.instance = new RegularLinkWrapper(self, port, nodes, messageClass);
