@@ -62,7 +62,6 @@ public class Node {
             // Services that implement listen from UDPService
             NodeServiceWrapper nodeService = new NodeServiceWrapperBuilder(linkToNodes, nodeConfig, nodeConfigs, blockValidator).build();
             ClientServiceWrapper clientService = new ClientServiceWrapperBuilder(linkToClients, nodeConfig, clientConfigs).build();
-            LedgerServiceWrapper instance = null;
             // Other services
             BlockBuilderService blockBuilderService = new BlockBuilderService(nodeConfig);
 

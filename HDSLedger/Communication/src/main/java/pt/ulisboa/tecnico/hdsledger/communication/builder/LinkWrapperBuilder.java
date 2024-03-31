@@ -2,7 +2,9 @@ package pt.ulisboa.tecnico.hdsledger.communication.builder;
 
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.Message;
+import pt.ulisboa.tecnico.hdsledger.communication.personas.DeafLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.IgnoreMessagesLinkWrapper;
+import pt.ulisboa.tecnico.hdsledger.communication.personas.MuteLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.RegularLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.SlowLinkWrapper;
 import pt.ulisboa.tecnico.hdsledger.communication.personas.WrongCommitLinkWrapper;
@@ -21,6 +23,12 @@ public class LinkWrapperBuilder {
                 break;
             case DROP:
                 this.instance = new IgnoreMessagesLinkWrapper(self, port, nodes, messageClass);
+                break;
+            case DEAF:
+                this.instance = new DeafLinkWrapper(self, port, nodes, messageClass);
+                break;
+            case MUTE:
+                this.instance = new MuteLinkWrapper(self, port, nodes, messageClass);
                 break;
             case WRONG_VALUE:
                 this.instance = new WrongValueLinkWrapper(self, port, nodes, messageClass);

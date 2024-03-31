@@ -18,6 +18,12 @@ public class NodeServiceWrapperBuilder {
             case DROP:
                 this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
                 break;
+            case DEAF:
+                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
+                break;
+            case MUTE:
+                this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
+                break;
             case WRONG_VALUE:
                 this.instance = new RegularNodeServiceWrapper(link, config, nodesConfig, validator);
                 break;
