@@ -50,15 +50,19 @@ public class LedgerService implements ILedgerService {
     private NodeServiceWrapper nodeService = null;
     private BlockBuilderService blockBuilderService = null;
 
-    public LedgerService(LedgerServiceWrapper self, ProcessConfig nodeConfig,ProcessConfig[] clientConfigs
-    ,ClientServiceWrapper clientService,NodeServiceWrapper nodeService,BlockBuilderService blockBuilderService) {
-        this.self = self;
-        this.config = nodeConfig;
+    public LedgerService(LedgerServiceWrapper selfWrapper, ProcessConfig selfConfig, ProcessConfig[] clientConfigs, ProcessConfig[] nodeConfigs, 
+        ClientServiceWrapper clientService, NodeServiceWrapper nodeService, BlockBuilderService blockBuilderService) {
+        
+        this.self = selfWrapper;
+        this.config = selfConfig;
         this.clientService = clientService;
         this.nodeService = nodeService;
         this.blockBuilderService = blockBuilderService;
         for (ProcessConfig clientConfig : clientConfigs) {
-            accounts.put(clientConfig.getId(), new Account(clientConfig.getId()));
+            clientAccounts.put(clientConfig.getId(), new Account(clientConfig.getId()));
+        }
+        for (ProcessConfig validator : nodeConfigs) {
+            validatorAccounts.put(validator.getId(), new ValidatorAccount(validator.getId()));
         }
         this.setLedgerOnClientService();
         this.setLedgerOnNodeService();
