@@ -17,6 +17,12 @@ public class ClientServiceWrapperBuilder {
             case DROP:
                 this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
                 break;
+            case DEAF:
+                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
+                break;
+            case MUTE:
+                this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
+                break;
             case WRONG_VALUE:
                 this.instance = new RegularClientServiceWrapper(link, config, clientsConfigs);
                 break;

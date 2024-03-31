@@ -14,6 +14,10 @@ public class ProcessConfig {
         SLOW,
         @SerializedName("DROP")
         DROP,
+        @SerializedName("DEAF")
+        DEAF,
+        @SerializedName("MUTE")
+        MUTE,
         @SerializedName("WRONG_VALUE")
         WRONG_VALUE,
         @SerializedName("WRONG_COMMIT")

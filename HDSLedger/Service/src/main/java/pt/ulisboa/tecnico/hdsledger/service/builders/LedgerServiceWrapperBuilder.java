@@ -20,6 +20,12 @@ public class LedgerServiceWrapperBuilder {
             case DROP:
                 this.instance = new RegularLedgerServiceWrapper(nodeConfig, clientConfigs,clientService,nodeService,blockBuilderService);
                 break;
+            case DEAF:
+                this.instance = new RegularLedgerServiceWrapper(nodeConfig, clientConfigs,clientService,nodeService,blockBuilderService);
+                break;
+            case MUTE:
+                this.instance = new RegularLedgerServiceWrapper(nodeConfig, clientConfigs,clientService,nodeService,blockBuilderService);
+                break;
             case WRONG_VALUE:
                 this.instance = new RegularLedgerServiceWrapper(nodeConfig, clientConfigs,clientService,nodeService,blockBuilderService);
                 break;
