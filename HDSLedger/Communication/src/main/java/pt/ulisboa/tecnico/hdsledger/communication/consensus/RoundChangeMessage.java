@@ -18,18 +18,18 @@ public class RoundChangeMessage extends SharableMessage implements ConsensusMess
     private Integer lastPreparedRound = null;
     // Value that has been prepared
     @Expose
-    private String lastPreparedSerializedValue = null;
+    private String lastPreparedSerializedHashValue = null;
 
     public RoundChangeMessage(Integer consensusInstance, Integer round) {
         this.consensusInstance = consensusInstance;
         this.round = round;
     }
 
-    public RoundChangeMessage(Integer consensusInstance, Integer round, Integer lastPreparedRound, String lastPreparedSerializedValue) {
+    public RoundChangeMessage(Integer consensusInstance, Integer round, Integer lastPreparedRound, String lastPreparedSerializedHashValue) {
         this.consensusInstance = consensusInstance;
         this.round = round;
         this.lastPreparedRound = lastPreparedRound;
-        this.lastPreparedSerializedValue = lastPreparedSerializedValue;
+        this.lastPreparedSerializedHashValue = lastPreparedSerializedHashValue;
     }
 
     public Integer getConsensusInstance() {
@@ -44,16 +44,16 @@ public class RoundChangeMessage extends SharableMessage implements ConsensusMess
         return this.lastPreparedRound;
     }
 
-    public String getLastPreparedSerializedValue(){
-        return this.lastPreparedSerializedValue;
+    public String getLastPreparedSerializedHashValue(){
+        return this.lastPreparedSerializedHashValue;
     }
 
     public void setLastPreparedRound(Integer lastPreparedRound){
         this.lastPreparedRound = lastPreparedRound;
     }
         
-    public void setLastPreparedValue(String lastPreparedSerializedValue){
-        this.lastPreparedSerializedValue = lastPreparedSerializedValue;
+    public void setLastPreparedHashValue(String lastPreparedSerializedHashValue){
+        this.lastPreparedSerializedHashValue = lastPreparedSerializedHashValue;
     }
 
 }
