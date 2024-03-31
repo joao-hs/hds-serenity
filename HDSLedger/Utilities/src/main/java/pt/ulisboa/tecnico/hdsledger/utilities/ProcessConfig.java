@@ -19,7 +19,9 @@ public class ProcessConfig {
         @SerializedName("MUTE")
         MUTE,
         @SerializedName("ARBITRARY")
-        ARBITRARY
+        ARBITRARY,
+        @SerializedName("INVARGS")
+        INVARGS
     }
 
     private String hostname;
