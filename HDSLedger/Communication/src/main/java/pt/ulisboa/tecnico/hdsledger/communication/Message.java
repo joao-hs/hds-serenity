@@ -19,7 +19,9 @@ public class Message extends SignedMessage {
         COMMIT,
         ACK,
         IGNORE,
-        ROUND_CHANGE,
+        ROUND_CHANGE, 
+        GET_CONTEXT,
+        RECEIVED_CONTEXT
     }
 
     public Message(String senderId, Type type) {

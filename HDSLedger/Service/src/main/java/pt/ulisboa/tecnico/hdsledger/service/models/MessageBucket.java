@@ -54,8 +54,8 @@ public class MessageBucket{
         HashMap<String, Integer> frequency = new HashMap<>();
         bucket.get(instance).get(round).values().forEach((message) -> {
             PrepareMessage prepareMessage = message.deserializePrepareMessage();
-            String serializedValue = prepareMessage.getSerializedValue();
-            frequency.put(serializedValue, frequency.getOrDefault(serializedValue, 0) + 1);
+            String serializedHashValue = prepareMessage.getSerializedHashValue();
+            frequency.put(serializedHashValue, frequency.getOrDefault(serializedHashValue, 0) + 1);
         });
 
         // Only one value (if any, thus the optional) will have a frequency
@@ -72,7 +72,7 @@ public class MessageBucket{
         HashMap<String, Integer> frequency = new HashMap<>();
         bucket.get(instance).get(round).values().forEach((message) -> {
             CommitMessage commitMessage = message.deserializeCommitMessage();
-            String serializedValue = commitMessage.getSerializedValue();
+            String serializedValue = commitMessage.getSerializedHashValue();
             frequency.put(serializedValue, frequency.getOrDefault(serializedValue, 0) + 1);
         });
 

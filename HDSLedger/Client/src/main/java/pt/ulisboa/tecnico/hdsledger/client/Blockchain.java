@@ -75,7 +75,7 @@ public class Blockchain {
         // 2. At least F + 1 commit messages with the same value
         // Why? 
         return commitMessagesMap.values().stream()
-            .collect(Collectors.groupingBy(CommitMessage::getSerializedValue, Collectors.counting()))
+            .collect(Collectors.groupingBy(CommitMessage::getSerializedHashValue, Collectors.counting()))
             .values().stream().anyMatch(votes -> votes >= 2 * F_nodes + 1);
     }
 

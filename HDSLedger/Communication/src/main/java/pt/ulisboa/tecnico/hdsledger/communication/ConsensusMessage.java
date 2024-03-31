@@ -2,6 +2,8 @@ package pt.ulisboa.tecnico.hdsledger.communication;
 
 import com.google.gson.Gson;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.ContextMessage;
+import pt.ulisboa.tecnico.hdsledger.communication.consensus.GetContextMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrePrepareMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.PrepareMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.RoundChangeMessage;
@@ -43,6 +45,14 @@ public class ConsensusMessage extends Message {
 
     public RoundChangeMessage deserializeRoundChangeMessage() {
         return new Gson().fromJson(this.message, RoundChangeMessage.class);
+    }
+
+    public GetContextMessage deserializeGetContextMessage() {
+        return new Gson().fromJson(this.message, GetContextMessage.class);
+    }
+
+    public ContextMessage deserializeContextMessage() {
+        return new Gson().fromJson(this.message, ContextMessage.class);
     }
     
     public String getMessage() {

@@ -10,18 +10,18 @@ import pt.ulisboa.tecnico.hdsledger.communication.interfaces.ConsensusMessageInt
 public class CommitMessage extends SharableMessage implements ConsensusMessageInterface {
 
     @Expose
-    private String serializedValue;
+    private String serializedHashValue;
 
-    public CommitMessage(String serializedValue) {
-        this.serializedValue = serializedValue;
+    public CommitMessage(String serializedHashValue) {
+        this.serializedHashValue = serializedHashValue;
     }
 
-    public String getSerializedValue() {
-        return serializedValue;
+    public String getSerializedHashValue() {
+        return serializedHashValue;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getCreator(), getSignature(), serializedValue);
+        return Objects.hash(getCreator(), getSignature(), serializedHashValue);
     }
 }

@@ -12,7 +12,7 @@ public class InstanceInfo {
 
     private int currentRound = 1;
     private int preparedRound = -1;
-    private String preparedSerializedValue;
+    private String preparedSerializedHashValue;
     private CommitMessage commitMessage;
     private String serializedValue;
     private String valueHash;
@@ -20,12 +20,18 @@ public class InstanceInfo {
 
     public InstanceInfo(String serializedValue) {
         this.serializedValue = serializedValue;
+        this.setValueHash();
     }
 
-    public InstanceInfo(int currentRound, String serializedValue) {
+    public InstanceInfo(int currentRound, String serializedValue, boolean isHash) {
         this.currentRound = currentRound;
-        this.serializedValue = serializedValue;
-        setValueHash();
+        if (isHash) {
+            this.valueHash = serializedValue;
+        }
+        else {
+            this.serializedValue = serializedValue;
+            this.setValueHash();
+        }
     }
 
     public int getCurrentRound() {
@@ -48,12 +54,12 @@ public class InstanceInfo {
         this.preparedRound = preparedRound;
     }
 
-    public String getPreparedSerializedValue() {
-        return preparedSerializedValue;
+    public String getPreparedSerializedHashValue() {
+        return preparedSerializedHashValue;
     }
 
-    public void setPreparedValue(String preparedValue) {
-        this.preparedSerializedValue = preparedValue;
+    public void setPreparedHashValue(String preparedValue) {
+        this.preparedSerializedHashValue = preparedValue;
     }
 
     public String getSerializedValue() {
