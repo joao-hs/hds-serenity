@@ -1,9 +1,8 @@
 package pt.ulisboa.tecnico.hdsledger.communication;
 
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 import pt.ulisboa.tecnico.hdsledger.communication.interfaces.Signable;
 import pt.ulisboa.tecnico.hdsledger.utilities.ErrorMessage;
@@ -18,6 +17,7 @@ import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
  * Must be used when propagating messages that are not necessarily created by the sender
  */
 public abstract class SharableMessage implements Signable {
+    @Expose
     private String creator;
     private String signature;
 
@@ -34,19 +34,7 @@ public abstract class SharableMessage implements Signable {
     }
 
     public String toSignable() {
-        Gson gson = new GsonBuilder().setExclusionStrategies(
-            new ExclusionStrategy() {
-                @Override
-                public boolean shouldSkipField(FieldAttributes f) {
-                    return f.getName().equals("signature");
-                }
-
-                @Override
-                public boolean shouldSkipClass(Class<?> clazz) {
-                    return false;
-                }
-            }
-        ).create();
+        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         return gson.toJson(this);
     }
 

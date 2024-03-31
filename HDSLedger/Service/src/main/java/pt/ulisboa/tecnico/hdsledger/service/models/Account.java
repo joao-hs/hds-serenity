@@ -1,13 +1,13 @@
 package pt.ulisboa.tecnico.hdsledger.service.models;
 
 import java.text.MessageFormat;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
 
 public class Account {
     private final String id;
-    private AtomicInteger balance = new AtomicInteger(100);
+    private double balance = 100; // initial amount
+    private final Object lock = new Object();
 
     public Account(String id) {
         this.id = id;
@@ -17,25 +17,52 @@ public class Account {
         return id;
     }
 
-    public int getBalance() {
-        return balance.get();
+    public double getBalance() {
+        synchronized (lock) {
+            return balance;
+        }
     }
 
-    public int incrementBalance(int amount) {
+    public double incrementBalance(double amount) {
         if (amount < 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
-        return balance.addAndGet(amount);
+        synchronized (lock) {
+            balance += amount;
+            return balance;
+        }
     }
 
-    public int decrementBalance(int amount) throws InsufficientFundsException {
+    public double decrementBalance(double amount) throws InsufficientFundsException {
         if (amount < 0) {
             throw new IllegalArgumentException("Amount must be positive");
         }
-        if (balance.get() < amount) {
-            throw new InsufficientFundsException(MessageFormat.format("Insufficient funds to withdraw {0} from account {1}",
-                    amount, id));
+        synchronized (lock) {
+            if (balance < amount) {
+                throw new InsufficientFundsException(MessageFormat.format("Insufficient funds to withdraw {0} from account {1}",
+                        amount, id));
+            }
+            balance -= amount;
+            return balance;
         }
-        return balance.addAndGet(-amount);
+    }
+
+    public boolean boundedDeduct(double amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("Amount must be positive");
+        }
+        double deducted = 0;
+        synchronized (lock) {
+            deducted = Math.min(balance, amount);
+            balance -= deducted;
+        }
+        if (deducted == amount) {
+            return true;
+        }
+        return false;
+    }
+
+    public boolean canReceiveFromClients() {
+        return true;
     }
 }

@@ -19,16 +19,16 @@ public class BlockBuilderService implements IBlockBuilderService {
     private ProcessConfig config;
     
     private int initialCapacity = 10;
-    private int minFee;
-    private int maxFee;
-    private int feeThreshold;
-    private int availableFee = 0;
-    private float minAmountFeeRatio;
+    private double minFee;
+    private double maxFee;
+    private double feeThreshold;
+    private double availableFee = 0;
+    private double minAmountFeeRatio;
 
     private PriorityQueue<Transaction> transactionPool = new PriorityQueue<Transaction>(this.initialCapacity, new Comparator<Transaction>() {
         @Override
         public int compare(Transaction t1, Transaction t2) {
-            return t2.getTransferRequest().getFee() - t1.getTransferRequest().getFee(); // Higher fee first
+            return Double.compare(t2.getTransferRequest().getFee(), t1.getTransferRequest().getFee()); // Higher fee first
         }
     });
 
@@ -57,6 +57,8 @@ public class BlockBuilderService implements IBlockBuilderService {
                 block.addTransaction(transaction);
             }
             block.setMerkleTree();
+
+            block.sign(config.getId(), config.getPrivKeyPath());
             return block;
         }
     }
