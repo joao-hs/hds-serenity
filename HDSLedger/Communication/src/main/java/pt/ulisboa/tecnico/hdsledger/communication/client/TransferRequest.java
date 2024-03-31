@@ -1,15 +1,21 @@
 package pt.ulisboa.tecnico.hdsledger.communication.client;
 
+import com.google.gson.annotations.Expose;
+
 public class TransferRequest extends ClientRequest {
+    @Expose
     private final String sender;
+    @Expose
     private final String receiver;
-    private final int amount;
-    private final int fee;
+    @Expose
+    private final double amount;
+    @Expose
+    private final double fee;
 
     // this is not an idempotent request, so it MUST be resilient to replay attacks
     private String timestamp;
 
-    public TransferRequest(String sender, String receiver, int amount, int fee, String timestamp) {
+    public TransferRequest(String sender, String receiver, double amount, double fee, String timestamp) {
         this.sender = sender;
         this.receiver = receiver;
         this.amount = amount;
@@ -25,11 +31,11 @@ public class TransferRequest extends ClientRequest {
         return receiver;
     }
 
-    public int getAmount() {
+    public double getAmount() {
         return amount;
     }
 
-    public int getFee() {
+    public double getFee() {
         return fee;
     }
 

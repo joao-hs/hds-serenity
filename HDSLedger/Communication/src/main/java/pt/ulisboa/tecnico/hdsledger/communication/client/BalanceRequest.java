@@ -1,7 +1,9 @@
 package pt.ulisboa.tecnico.hdsledger.communication.client;
 
-public class BalanceRequest extends ClientRequest {
+import com.google.gson.annotations.Expose;
 
+public class BalanceRequest extends ClientRequest {
+    @Expose
     private final String target;
 
     public BalanceRequest(String target) {

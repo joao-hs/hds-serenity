@@ -50,8 +50,8 @@ public class Client {
             }
             else if (command_info.length == 4 && (command_info[0].equals("transfer") || command_info[0].equals("t"))) {
                 String receiver = command_info[1];
-                int amount = Integer.parseInt(command_info[2]);
-                int fee = Integer.parseInt(command_info[3]);
+                double amount = Double.valueOf(command_info[2]);
+                double fee = Double.valueOf(command_info[3]);
                 blockchain.transfer(receiver, amount, fee);
             }
             else if (command_info.length == 2 && (command_info[0].equals("balance") || command_info[0].equals("b"))) {

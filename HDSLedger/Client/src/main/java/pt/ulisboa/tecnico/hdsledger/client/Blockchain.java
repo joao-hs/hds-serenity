@@ -142,7 +142,7 @@ public class Blockchain {
         );
     }
 
-    public void transfer(String receiver, int amount, int fee) {
+    public void transfer(String receiver, double amount, double fee) {
         System.out.println(
                 MessageFormat.format("{0} - Requesting Transfer {1} to {2}", clientConfig.getId(), amount, receiver));
         String freshness = Timestamp.getCurrentTimestamp();

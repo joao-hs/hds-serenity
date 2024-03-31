@@ -34,11 +34,11 @@ public class ProcessConfig {
 
     private String privKeyPath;
 
-    private int minFee = 0; // minimum fee per transaction
+    private double minFee = 0; // minimum fee per transaction
 
-    private int maxFee = Integer.MAX_VALUE; // maximum fee per transaction
+    private double maxFee = Double.MAX_VALUE; // maximum fee per transaction
 
-    private int feeThreshold = 0; // fee threshold to build a block
+    private double feeThreshold = 0; // fee threshold to build a block
 
     private float minFeeAmountRatio = 0; // minimum fee amount ratio, (e.g., if 0.1, fee needs to be 10% or more of the amount)
 
@@ -70,15 +70,15 @@ public class ProcessConfig {
         return privKeyPath;
     }
 
-    public int getMinFee() {
+    public double getMinFee() {
         return minFee;
     }
 
-    public int getMaxFee() {
+    public double getMaxFee() {
         return maxFee;
     }
 
-    public int getFeeThreshold() {
+    public double getFeeThreshold() {
         return feeThreshold;
     }
 

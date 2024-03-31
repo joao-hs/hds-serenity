@@ -5,7 +5,7 @@ import java.util.Objects;
 public class BalanceResponse extends ClientResponse {
 
     private String target;
-    private int balance;
+    private double balance;
 
     public BalanceResponse(Status status, String clientRequestHash, String target) {
         this.setGeneralStatus(GeneralStatus.NOT_SUBMITTED); // to consensus
@@ -22,11 +22,11 @@ public class BalanceResponse extends ClientResponse {
         this.target = target;
     }
 
-    public int getBalance() {
+    public double getBalance() {
         return balance;
     }
 
-    public void setBalance(int balance) {
+    public void setBalance(double balance) {
         this.balance = balance;
     }
 

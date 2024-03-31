@@ -54,7 +54,7 @@ public class Node {
             LinkWrapper linkToClients = new LinkWrapperBuilder(nodeConfig, nodeConfig.getClientPort(), clientConfigs,
                 BlockchainRequest.class).build();
 
-            BlockValidator blockValidator = new BlockValidator(clientConfigs);
+            BlockValidator blockValidator = new BlockValidator(clientConfigs, nodeConfigs);
 
             // Services that implement listen from UDPService
             NodeService nodeService = new NodeService(linkToNodes, nodeConfig, nodeConfigs, blockValidator);
@@ -67,6 +67,7 @@ public class Node {
             LedgerService ledger = LedgerService.getInstance();
             ledger.setConfig(nodeConfig);
             ledger.addAllAccounts(clientConfigs);
+            ledger.addAllValidatorAccounts(nodeConfigs);
             ledger.setClientService(clientService);
             ledger.setNodeService(nodeService);
             ledger.setBlockBuilderService(blockBuilderService);

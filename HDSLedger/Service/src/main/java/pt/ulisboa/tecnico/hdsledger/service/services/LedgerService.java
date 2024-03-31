@@ -22,6 +22,7 @@ import pt.ulisboa.tecnico.hdsledger.service.interfaces.ILedgerService;
 import pt.ulisboa.tecnico.hdsledger.service.models.Account;
 import pt.ulisboa.tecnico.hdsledger.service.models.Block;
 import pt.ulisboa.tecnico.hdsledger.service.models.Transaction;
+import pt.ulisboa.tecnico.hdsledger.service.models.ValidatorAccount;
 import pt.ulisboa.tecnico.hdsledger.utilities.AccountNotFoundException;
 import pt.ulisboa.tecnico.hdsledger.utilities.CustomLogger;
 import pt.ulisboa.tecnico.hdsledger.utilities.InsufficientFundsException;
@@ -32,7 +33,9 @@ public class LedgerService implements ILedgerService {
 
     private static LedgerService instance = null;
 
-    private ConcurrentHashMap<String, Account> accounts = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, Account> clientAccounts = new ConcurrentHashMap<>();
+
+    private ConcurrentHashMap<String, ValidatorAccount> validatorAccounts = new ConcurrentHashMap<>(); // block's merkle root hash -> Block object
 
     private Map<String, Block> merkleRootBlockMap = new ConcurrentHashMap<>(); // block's merkle root hash -> Block object 
 
@@ -74,11 +77,11 @@ public class LedgerService implements ILedgerService {
     }
 
     public void init() throws Exception {
-        if (accounts.isEmpty() || clientService == null || nodeService == null) {
+        if (clientAccounts.isEmpty() || clientService == null || nodeService == null) {
             throw new Exception("All accounts, ClientService and NodeService must be set before calling init.");
         }
         // Create the genesis block
-        Block genesisBlock = new Block(accounts.keys());
+        Block genesisBlock = new Block(clientAccounts.keys());
         genesisBlock.setMerkleTree();
         blockchain.add(genesisBlock);
 
@@ -88,16 +91,25 @@ public class LedgerService implements ILedgerService {
 
     public void addAllAccounts(ProcessConfig[] clientConfigs) {
         for (ProcessConfig config : clientConfigs) {
-            accounts.put(config.getId(), new Account(config.getId()));
+            clientAccounts.put(config.getId(), new Account(config.getId()));
         }
     }
 
-    public int getBalance(String id) throws AccountNotFoundException {
-        if (!accounts.containsKey(id)) {
+    public void addAllValidatorAccounts(ProcessConfig[] nodeConfigs) {
+        for (ProcessConfig config : nodeConfigs) {
+            validatorAccounts.put(config.getId(), new ValidatorAccount(config.getId()));
+        }
+    }
+
+    public double getBalance(String id) throws AccountNotFoundException {
+        if (!clientAccounts.containsKey(id) && !validatorAccounts.containsKey(id)) {
             throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", id));
         }
-        Account account = accounts.get(id);
-        int balance = -1;
+        Account account = clientAccounts.get(id);
+        if (account == null) {
+            account = validatorAccounts.get(id);
+        }
+        double balance = Double.valueOf(-1);
 
         synchronized (account) {
             balance = account.getBalance();
@@ -106,21 +118,22 @@ public class LedgerService implements ILedgerService {
         return balance;
     }
 
-    public void performTransfer(String senderId, String receiverId, int amount) throws AccountNotFoundException, InsufficientFundsException {
-        if (!accounts.containsKey(senderId)) {
+    public void performTransfer(String senderId, String receiverId, double amount) throws AccountNotFoundException, InsufficientFundsException {
+        if (!clientAccounts.containsKey(senderId)) {
             throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", senderId));
         }
-        if (!accounts.containsKey(receiverId)) {
+        if (!clientAccounts.containsKey(receiverId) && !clientAccounts.get(receiverId).canReceiveFromClients()) {
             throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", receiverId));
         }
 
-        Account sender = accounts.get(senderId);
-        Account receiver = accounts.get(receiverId);
+        Account sender = clientAccounts.get(senderId);
+        Account receiver = clientAccounts.get(receiverId);
 
         // no need to acquire lock on receiver since it will only increment
         // if the receiver is transfering money {B} (that relies on this transfer {A}) concurrently:
         // 1. (A did not happen yet) B won't have sufficient funds to transfer
         // 2. (A happened) B will have sufficient funds to transfer
+        LOGGER.log(Level.INFO, MessageFormat.format("{0} - Transferring {1} from {2} to {3}", config.getId(), amount, senderId, receiverId));
         synchronized (sender) {
             sender.decrementBalance(amount);
             receiver.incrementBalance(amount);
@@ -187,11 +200,13 @@ public class LedgerService implements ILedgerService {
             return response;
         }
 
+        LOGGER.log(Level.INFO, MessageFormat.format("{0} - Transaction has been added to the pool: {1}", config.getId(), transaction.toString()));
+
         Block block = blockBuilderService.buildBlock();
         if (block != null) {
             LOGGER.log(Level.INFO, MessageFormat.format("{0} - Block built: {1}", config.getId(), block.toJson()));
             merkleRootBlockMap.put(block.getMerkleRootHash(), block);
-            nodeService.reachConsensus(block.getSerializedBlock());
+            nodeService.reachConsensus(block.toJson());
         }
 
         synchronized (transaction) {
@@ -224,18 +239,12 @@ public class LedgerService implements ILedgerService {
 
     }
 
-    private boolean existsTarget(BalanceRequest request, Set<String> clientIds){
-        return clientIds.contains(request.getTarget());
-    }
-
     @Override
     public BalanceResponse balance(BalanceRequest request) {
 
-        Map<String, ProcessConfig> clientProcesses = clientService.getConfigs();
-
         String requestHash = request.digest();
 
-        if(!existsTarget(request, clientProcesses.keySet())){  
+        if(!clientAccounts.containsKey(request.getTarget()) && !validatorAccounts.containsKey(request.getTarget())){  
             BalanceResponse response = new BalanceResponse(ClientResponse.Status.ACCOUNT_NOT_FOUND, requestHash, request.getTarget());
             return response;
         }
@@ -279,16 +288,45 @@ public class LedgerService implements ILedgerService {
                 reverseMerkleTree.put(transaction.digest(), blockKey);
                 TransferRequest request = transaction.getTransferRequest();
                 String requestHash = request.digest();
+                
+                // Deduct fee
                 try {
+                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - Deducting fee from account {1}", config.getId(), request.getSender()));
+                    try {
+                        Account sender = clientAccounts.get(request.getSender());
+                        if (sender == null) {
+                            throw new AccountNotFoundException(MessageFormat.format("Account {0} not found", request.getSender()));
+                        }
+                        sender.decrementBalance(request.getFee());
+                    } catch (InsufficientFundsException e) {
+                        LOGGER.log(Level.INFO, MessageFormat.format("{0} - {1}", config.getId(), e.getMessage()));
+                        // Sender does not have enough funds to pay the fee -> transaction is ineffective
+                        validatorAccounts.get(block.getCreator()).boundedDeduct(request.getFee());
+                        // TODO: If the proposer doesn't have enough funds, will be blacklisted from proposing other blocks for t time
+                        throw e;
+                    }
+
                     LOGGER.log(Level.INFO, MessageFormat.format("{0} - Processing transaction: {1}", config.getId(), request.toJson()));
                     blockBuilderService.removeTransaction(transaction);
                     performTransfer(request.getSender(), request.getReceiver(), request.getAmount());
+
+                    // half of the fee goes to the creator of the block
+                    validatorAccounts.get(block.getCreator()).incrementBalance(request.getFee()/2);
+                    // other half of the fee is distributed to all validators
+                    distributeFeeAndAvoid(request.getFee()/2, block.getCreator());
+
+
                     clientResponsesStatus.put(requestHash, ClientResponse.Status.OK);
                 } catch (AccountNotFoundException e) {
-                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - Account {1} not found", config.getId(), request.getSender()));
+                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - {1}", config.getId(), e.getMessage()));
                     clientResponsesStatus.put(requestHash, ClientResponse.Status.ACCOUNT_NOT_FOUND);
                 } catch (InsufficientFundsException e) {
-                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - Insufficient funds in account {1}", config.getId(), request.getSender()));
+                    LOGGER.log(Level.INFO, MessageFormat.format("{0} - {1}", config.getId(), e.getMessage()));
+                    
+                    // half of the fee goes to other validators
+                    distributeFeeAndAvoid(request.getFee()/2, block.getCreator());
+                    // other half of the fee is burnt
+
                     clientResponsesStatus.put(requestHash, ClientResponse.Status.INSUFFICIENT_FUNDS);
                 }
                 transaction.notify();
@@ -300,5 +338,12 @@ public class LedgerService implements ILedgerService {
             block.setChainHash();
             blockchain.add(block);
         }
+    }
+
+    private void distributeFeeAndAvoid(double fee, String avoidId) {
+        int numValidators = validatorAccounts.size() - 1; // excluding avoidId
+        validatorAccounts.values().stream()
+            .filter(v -> !v.getId().equals(avoidId))
+            .forEach(v -> v.incrementBalance(fee/numValidators));
     }
 }

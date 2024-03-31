@@ -10,15 +10,15 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 
+import pt.ulisboa.tecnico.hdsledger.communication.SharableMessage;
 import pt.ulisboa.tecnico.hdsledger.communication.client.TransferRequest;
 import pt.ulisboa.tecnico.hdsledger.communication.consensus.CommitMessage;
 import pt.ulisboa.tecnico.hdsledger.utilities.MerkleTree;
 import pt.ulisboa.tecnico.hdsledger.utilities.RSAEncryption;
 
-public class Block {
+public class Block extends SharableMessage {
     // Block Header
     private Block previousBlock;
     private String chainHash = null;
@@ -39,8 +39,8 @@ public class Block {
             TransferRequest ownRequest = new TransferRequest(
                 null, // sender
                 accountId, // receiver
-                100, // ! initial amount
-                0, // fee
+                Double.valueOf(100), // ! initial amount
+                Double.valueOf(0), // fee
                 "2024-02-25 16:59:07" // random timestamp
             );
 
@@ -110,13 +110,6 @@ public class Block {
         StringBuilder sb = new StringBuilder();
         transactions.forEach(transaction -> sb.append(transaction.toString()));
         return sb.toString();
-    }
-
-    public String getSerializedBlock() {
-        Gson gson = new GsonBuilder()
-            .excludeFieldsWithoutExposeAnnotation()
-            .create();
-        return gson.toJson(this);
     }
 
     public String toJson() {
