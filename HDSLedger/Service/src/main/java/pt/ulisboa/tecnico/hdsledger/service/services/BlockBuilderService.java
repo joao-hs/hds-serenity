@@ -23,7 +23,8 @@ public class BlockBuilderService implements IBlockBuilderService {
     private double maxFee;
     private double feeThreshold;
     private double availableFee = 0;
-    private double minAmountFeeRatio;
+    private double maxBalanceFeeMargin;
+    private double maxBalanceAmountMargin;
 
     private PriorityQueue<Transaction> transactionPool = new PriorityQueue<Transaction>(this.initialCapacity, new Comparator<Transaction>() {
         @Override
@@ -38,7 +39,8 @@ public class BlockBuilderService implements IBlockBuilderService {
         this.minFee = config.getMinFee();
         this.maxFee = config.getMaxFee();
         this.feeThreshold = config.getFeeThreshold();
-        this.minAmountFeeRatio = config.getMinFeeAmountRatio();
+        this.maxBalanceFeeMargin = config.getMaxBalanceFeeMargin();
+        this.maxBalanceAmountMargin = config.getMaxBalanceAmountMargin();
     }
     
     @Override
@@ -64,8 +66,11 @@ public class BlockBuilderService implements IBlockBuilderService {
     }
 
     @Override
-    public boolean addTransaction(Transaction transaction) {
-        if (!isTransactionValid(transaction)) {
+    public boolean addTransaction(Transaction transaction, double currentBalance) {
+        if (!isTransactionAcceptable(transaction)) {
+            return false;
+        }
+        if (!isTransactionRisky(transaction, currentBalance)) {
             return false;
         }
         TransferRequest request = transaction.getTransferRequest();
@@ -74,7 +79,7 @@ public class BlockBuilderService implements IBlockBuilderService {
             return transactionPool.add(transaction);
         }
     }
-    
+
     @Override
     public boolean removeTransaction(Transaction transaction) {
         TransferRequest request = transaction.getTransferRequest();
@@ -87,19 +92,30 @@ public class BlockBuilderService implements IBlockBuilderService {
     }
 
     @Override
-    public void setTransactionFilters(int minFee, int maxFee, int feeThreshold, float minAmountFeeRation) {
+    public void setTransactionFilters(double minFee, double maxFee, double feeThreshold, double maxBalanceFeeMargin, double maxBalanceAmountMargin) {
         this.minFee = minFee;
         this.maxFee = maxFee;
         this.feeThreshold = feeThreshold;
-        this.minAmountFeeRatio = minAmountFeeRation;
+        this.maxBalanceFeeMargin = maxBalanceFeeMargin;
+        this.maxBalanceAmountMargin = maxBalanceAmountMargin;
     }
 
     @Override
-    public boolean isTransactionValid(Transaction transaction) {
+    public boolean isTransactionAcceptable(Transaction transaction) {
         TransferRequest request = transaction.getTransferRequest();
         return request.getFee() >= minFee 
-            && request.getFee() <= maxFee 
-            && request.getFee() / request.getAmount() >= minAmountFeeRatio;
+            && request.getFee() <= maxFee;
+    }
+
+    @Override
+    public boolean isTransactionRisky(Transaction transaction, double currentBalance) {
+        TransferRequest request = transaction.getTransferRequest();
+        double delta = -transactionPool.stream()
+            .filter(t -> t.getTransferRequest().getSender().equals(request.getSender()))
+            .mapToDouble(t -> t.getTransferRequest().getAmount() + t.getTransferRequest().getFee())
+            .sum();
+        return request.getAmount() + request.getFee() <= (currentBalance + delta) * maxBalanceAmountMargin
+            && request.getFee() <= (currentBalance + delta) * maxBalanceFeeMargin;
     }
     
 }

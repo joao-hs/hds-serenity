@@ -44,7 +44,17 @@ public class ProcessConfig {
 
     private double feeThreshold = 0; // fee threshold to build a block
 
-    private float minFeeAmountRatio = 0; // minimum fee amount ratio, (e.g., if 0.1, fee needs to be 10% or more of the amount)
+    /*
+     * Example: 
+     * 1. I have 100 funds. I want to send 10 + 1 fee. My balanceFeeMargin is 1/100=0.11; my balanceAmountMargin is 11/100 = 0.11
+     * 2. I have 52 funds. I want to send 30 + 21 fee. My balanceFeeMargin is 21/52=0.40; my balanceAmountMargin is 51/52 = 0.98
+     */
+    // minimum percentage of margin between balance and to-be deducted fee in a transaction
+    private double maxBalanceFeeMargin = 0.5; // 0..0.5 -> should be conservative, otherwise validator might risk paying the fee
+    
+    // minimum percentage of margin between balance and total to-be deducted amount in a transaction
+    private double maxBalanceAmountMargin = 1; // 0..1 -> can be more lenient, since there is no hard penalty
+
 
     private Persona persona;
 
@@ -86,8 +96,12 @@ public class ProcessConfig {
         return feeThreshold;
     }
 
-    public float getMinFeeAmountRatio() {
-        return minFeeAmountRatio;
+    public double getMaxBalanceFeeMargin() {
+        return maxBalanceFeeMargin;
+    }
+
+    public double getMaxBalanceAmountMargin() {
+        return maxBalanceAmountMargin;
     }
 
     public Persona getPersona() {

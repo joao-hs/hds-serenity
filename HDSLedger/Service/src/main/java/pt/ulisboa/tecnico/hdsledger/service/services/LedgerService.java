@@ -194,8 +194,16 @@ public class LedgerService implements ILedgerService {
 
         LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received valid transfer request: {1}", config.getId(), request.toJson()));
 
+        double currentBalance;
+        try {
+            currentBalance = getBalance(request.getSender());
+        } catch (AccountNotFoundException e) {
+            TransferResponse response = new TransferResponse(TransferResponse.Status.BAD_SOURCE, requestHash);
+            return response;
+        }
+
         Transaction transaction = new Transaction(request);
-        if (!blockBuilderService.addTransaction(transaction)) {
+        if (!blockBuilderService.addTransaction(transaction, currentBalance)) {
             TransferResponse response = new TransferResponse(TransferResponse.Status.DENIED, requestHash);
             return response;
         }
