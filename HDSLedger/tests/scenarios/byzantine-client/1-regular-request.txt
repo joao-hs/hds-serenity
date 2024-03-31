@@ -1,0 +1,15 @@
+# config: N_base_4.json C_base_2.json
+
+# normal operation
+C1: balance C2
+C2: balance C1
+C2: balance C2
+
+C1: transfer C1 10 1
+C2: transfer C1 10 1
+
+# should be 99
+C1: balance C1
+
+# should be 99
+C2: balance C2
