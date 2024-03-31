@@ -713,7 +713,7 @@ public class NodeService implements UDPService, INodeService {
         }
     }
 
-    private synchronized void uponGetContext(ConsensusMessage message) {
+    public synchronized void uponGetContext(ConsensusMessage message) {
         int consensusInstance = message.getConsensusInstance();
         int round = message.getRound();
         String senderId = message.getSenderId();
@@ -749,7 +749,7 @@ public class NodeService implements UDPService, INodeService {
         }
     }
 
-    private synchronized void uponReceivedContext(ConsensusMessage message) {
+    public synchronized void uponReceivedContext(ConsensusMessage message) {
         int consensusInstance = message.getConsensusInstance();
         int round = message.getRound();
         String senderId = message.getSenderId();
@@ -815,10 +815,10 @@ public class NodeService implements UDPService, INodeService {
                                     this.self.uponRoundChangeRequest((ConsensusMessage) message);
                                 
                                 case GET_CONTEXT ->
-                                    uponGetContext((ConsensusMessage) message);
+                                    this.self.uponGetContext((ConsensusMessage) message);
 
                                 case RECEIVED_CONTEXT ->
-                                    uponReceivedContext((ConsensusMessage) message);
+                                    this.self.uponReceivedContext((ConsensusMessage) message);
 
                                 case ACK ->
                                     LOGGER.log(Level.INFO, MessageFormat.format("{0} - Received ACK message from {1}",

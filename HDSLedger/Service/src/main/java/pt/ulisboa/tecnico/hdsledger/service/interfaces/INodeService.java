@@ -79,6 +79,10 @@ public interface INodeService {
      *    why: a majority of correct nodes are asking to change round
      */
     public void uponRoundChangeRequest(ConsensusMessage message);
+
+    public void uponGetContext(ConsensusMessage message);
+
+    public void uponReceivedContext(ConsensusMessage message);
     /*
      * Trigger the consensus algorithm to reach consensus on a value
      */

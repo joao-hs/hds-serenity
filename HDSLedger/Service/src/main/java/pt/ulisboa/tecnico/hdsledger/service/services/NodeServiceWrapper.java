@@ -94,6 +94,14 @@ public abstract class NodeServiceWrapper implements UDPService, INodeService {
         this.nodeService.uponRoundChangeRequest(message);
     }
 
+    public synchronized void uponGetContext(ConsensusMessage message) {
+        this.nodeService.uponGetContext(message);
+    }
+
+    public void uponReceivedContext(ConsensusMessage message){
+        this.nodeService.uponReceivedContext(message);
+    }
+
     @Override
     public void listen() {
         this.nodeService.listen();
