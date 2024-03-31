@@ -22,9 +22,9 @@ public interface ILedgerService {
 
     public void addAllAccounts(ProcessConfig[] clientConfigs);
 
-    public int getBalance(String id) throws AccountNotFoundException;
+    public double getBalance(String id) throws AccountNotFoundException;
 
-    public void performTransfer(String senderId, String receiverId, int amount) throws AccountNotFoundException, InsufficientFundsException;
+    public void performTransfer(String senderId, String receiverId, double amount) throws AccountNotFoundException, InsufficientFundsException;
 
     public boolean existsSender(TransferRequest request, Set<String> clientIds);
 

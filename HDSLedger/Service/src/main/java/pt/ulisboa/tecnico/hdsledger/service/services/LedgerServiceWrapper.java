@@ -20,10 +20,11 @@ public abstract class LedgerServiceWrapper implements ILedgerService {
 
     protected Map<String, String> additionalInfo;
 
-    public LedgerServiceWrapper(ProcessConfig nodeConfig,ProcessConfig[] clientConfigs
-    ,ClientServiceWrapper clientService,NodeServiceWrapper nodeService,BlockBuilderService blockBuilderService) throws Exception {
-        this.ledgerService = new LedgerService(this,nodeConfig,clientConfigs,clientService,nodeService,blockBuilderService);
-        this.additionalInfo = nodeConfig.getAdditionalInfo();
+    public LedgerServiceWrapper(ProcessConfig self, ProcessConfig[] clientConfigs, ProcessConfig[] nodeConfigs, 
+        ClientServiceWrapper clientService, NodeServiceWrapper nodeService, BlockBuilderService blockBuilderService) throws Exception {
+        
+        this.ledgerService = new LedgerService(this, self, clientConfigs, nodeConfigs, clientService, nodeService, blockBuilderService);
+        this.additionalInfo = self.getAdditionalInfo();
 
     }
 
@@ -43,7 +44,7 @@ public abstract class LedgerServiceWrapper implements ILedgerService {
         this.ledgerService.addAllAccounts(clientConfigs);
     }
 
-    public int getBalance(String id) throws AccountNotFoundException {
+    public double getBalance(String id) throws AccountNotFoundException {
         return this.ledgerService.getBalance(id);
     }
 
@@ -85,5 +86,10 @@ public abstract class LedgerServiceWrapper implements ILedgerService {
     @Override
     public synchronized void uponConsensusReached(String serializedValue, Collection<CommitMessage> commitMessages) {
         this.ledgerService.uponConsensusReached(serializedValue, commitMessages);
+    }
+
+    @Override
+    public void performTransfer(String senderId, String receiverId, double amount) throws AccountNotFoundException, InsufficientFundsException {
+        this.ledgerService.performTransfer(senderId, receiverId, amount);
     }
 }

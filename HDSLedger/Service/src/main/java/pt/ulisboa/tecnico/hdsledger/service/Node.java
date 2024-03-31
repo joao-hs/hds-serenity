@@ -66,8 +66,8 @@ public class Node {
             BlockBuilderService blockBuilderService = new BlockBuilderService(nodeConfig);
 
             // Start ledger
-            LedgerServiceWrapper ledger =  new LedgerServiceWrapperBuilder(nodeConfig,clientConfigs,nodeConfigs,clientService,
-                nodeService,blockBuilderService).build();
+            LedgerServiceWrapper ledger =  new LedgerServiceWrapperBuilder(nodeConfig, clientConfigs, nodeConfigs, clientService,
+                nodeService, blockBuilderService).build();
             ledger.init();
             
 
