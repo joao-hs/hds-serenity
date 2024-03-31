@@ -1,5 +1,6 @@
 package pt.ulisboa.tecnico.hdsledger.communication.personas;
 
+import java.io.IOException;
 import java.net.InetAddress;
 
 import pt.ulisboa.tecnico.hdsledger.communication.LinkWrapper;
@@ -20,6 +21,16 @@ public class SlowLinkWrapper extends LinkWrapper {
             this.getLink().unreliableSend(hostname, port, data, true);
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    public Message receive() throws IOException, ClassNotFoundException {
+        try {
+            Thread.sleep(this.slowDownTime);
+            return this.getLink().receive();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
